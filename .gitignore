@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+
+# Arduino IDE compiled output ("Export compiled binary")
+build/
+*.bin
+*.elf
+*.map
+
+# Editors
+.vscode/
+*.swp
