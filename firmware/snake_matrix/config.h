@@ -36,11 +36,20 @@ const unsigned long SCORE_SHOW_MS = 3000;   // how long the final score stays up
 
 
 // ---------- Colours ----------
-const CRGB HEAD_COLOUR = CRGB(120, 255, 120);   // pale green, brighter than the body
-const CRGB BODY_COLOUR = CRGB(0, 160, 40);      // green
-const CRGB FOOD_COLOUR = CRGB(255, 30, 0);      // red-orange
-const CRGB DEAD_COLOUR = CRGB(255, 0, 0);       // head turns red on game over
+// Snake and food colours are chosen in the controller's Settings and
+// saved in flash (phase 8). These are only the defaults for a fresh board.
+// Written as 0xRRGGBB, the same as a web colour like #00ff40.
+const uint32_t DEFAULT_SNAKE_RGB = 0x00FF40;    // green
+const uint32_t DEFAULT_FOOD_RGB = 0xFF2000;     // red-orange
+
+const CRGB DEAD_COLOUR = CRGB(255, 0, 0);       // the crashed snake
 const CRGB SCORE_COLOUR = CRGB(255, 170, 0);    // amber digits for the final score
+
+
+// ---------- Effects (new in phase 8) ----------
+const uint8_t HEAD_PULSE_BPM = 50;        // head pulses toward white, ~50 times a minute
+const uint8_t TAIL_MIN_LEVEL = 60;        // tail tip brightness, out of 255 (the neck is 255)
+const unsigned long SPARKLE_MS = 400;     // how long the eat sparkle lasts
 
 
 // ---------- WiFi hotspot (new in phase 5) ----------

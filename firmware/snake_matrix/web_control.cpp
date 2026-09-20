@@ -11,10 +11,12 @@
 // Messages are short plain words, so they're easy to read and debug:
 //   browser -> ESP32:  up  down  left  right  restart  pause
 //                      mode walls  mode wrap
+//                      snake #00ff40  food #ff2000
 //   ESP32 -> browser:  state ready|playing|paused|over
 //                      score 7
 //                      reason hit a wall
 //                      mode walls|wrap
+//                      snake #00ff40  food #ff2000
 // =====================================================================
 
 #include <WiFi.h>
@@ -32,8 +34,33 @@ static AsyncWebSocket ws("/ws");     // the live connection lives at /ws
 static unsigned long lastCleanup = 0;
 
 
+// Reads a colour like "#00ff40" into 0x00FF40. Returns false if the
+// text isn't exactly # followed by 6 hex digits.
+static bool parseColour(const char* text, uint32_t &rgb) {
+  if (strlen(text) != 7 || text[0] != '#') {
+    return false;
+  }
+  char* end;
+  rgb = strtoul(text + 1, &end, 16);   // base 16 = hexadecimal
+  return *end == '\0';                // every character was a valid hex digit
+}
+
+
 // Turns one message from a controller into a game command.
 static void handleMessage(const char* text) {
+  uint32_t rgb;
+
+  // Colour messages carry a value, so check how they start first.
+  // strncmp compares only the first n characters.
+  if (strncmp(text, "snake ", 6) == 0) {
+    if (parseColour(text + 6, rgb)) inputRequestSnakeColour(rgb);
+    return;
+  }
+  if (strncmp(text, "food ", 5) == 0) {
+    if (parseColour(text + 5, rgb)) inputRequestFoodColour(rgb);
+    return;
+  }
+
   if      (strcmp(text, "up") == 0)      inputPushDirection(DIR_UP);
   else if (strcmp(text, "down") == 0)    inputPushDirection(DIR_DOWN);
   else if (strcmp(text, "left") == 0)    inputPushDirection(DIR_LEFT);

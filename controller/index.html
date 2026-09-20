@@ -83,6 +83,9 @@
   .sheet[hidden] { display: none; }
   .sheet-card {
     width: min(100%, 480px);
+    max-height: 88vh;
+    overflow-y: auto;
+    touch-action: pan-y;           /* the page blocks scrolling; the card allows it */
     background: var(--panel);
     border: 1px solid var(--line);
     border-radius: 20px;
@@ -95,6 +98,30 @@
   .modes { display: flex; gap: 8px; }
   .modes button { flex: 1; padding: 12px; font-size: 16px; border-radius: 12px; }
   .modes button.active { border-color: var(--green); color: var(--green); }
+  .swatches { display: flex; flex-wrap: wrap; gap: 12px; }
+  .swatch {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    background: var(--c);
+    padding: 0;
+  }
+  .swatch.active { outline: 2px solid var(--text); outline-offset: 3px; }
+  /* The last swatch opens the colour picker. It shows a rainbow until a
+     custom colour is chosen, then shows that colour. */
+  .swatch.custom {
+    position: relative;
+    overflow: hidden;
+    background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);
+  }
+  .swatch.custom.filled { background: var(--c); }
+  .swatch.custom input {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    opacity: 0;                    /* invisible, but still tappable */
+    border: 0; padding: 0;
+  }
+  .note { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
   .done { width: 100%; padding: 14px; font-size: 17px; border-radius: 14px; }
   .hint { text-align: center; color: var(--muted); font-size: 13px; margin: 12px 0 0; }
   /* touch screens don't need the keyboard hint */
@@ -144,6 +171,18 @@
       </div>
     </div>
 
+    <div class="setting">
+      <div class="setting-label"><b>Snake colour</b></div>
+      <div class="swatches" id="snake-swatches"></div>
+    </div>
+
+    <div class="setting">
+      <div class="setting-label"><b>Food colour</b></div>
+      <div class="swatches" id="food-swatches"></div>
+    </div>
+
+    <p class="note">The matrix shows every colour at full strength, so dark picks come out brighter, and LEDs look a little different from your screen.</p>
+
     <button id="close-settings" class="done">Done</button>
   </div>
 </div>
@@ -159,6 +198,20 @@
   const settingsBtn = document.getElementById('open-settings');
   const settingsSheet = document.getElementById('settings');
   const closeSettingsBtn = document.getElementById('close-settings');
+
+  // ---------- Colour choices ----------
+  // Lower-case hex, at full brightness, so they match exactly what the
+  // ESP32 sends back after it normalises a colour.
+  const PRESETS = {
+    snake: [
+      ['#00ff40', 'Green'], ['#00e5ff', 'Cyan'], ['#2060ff', 'Blue'],
+      ['#8a2bff', 'Purple'], ['#ff2d95', 'Pink'], ['#ffd000', 'Yellow'],
+    ],
+    food: [
+      ['#ff2000', 'Red'], ['#ff7a00', 'Orange'], ['#ffd000', 'Yellow'],
+      ['#ff2d95', 'Pink'], ['#ffffff', 'White'],
+    ],
+  };
 
   // ---------- Game state, as told to us by the ESP32 ----------
   let state = 'ready';
@@ -213,6 +266,7 @@
     if (key === 'score') scoreEl.textContent = value;
     if (key === 'reason') reason = value;
     if (key === 'mode') showMode(value);
+    if (key === 'snake' || key === 'food') showColour(key, value);
     if (key === 'state') {
       state = value;
       showState();
@@ -259,6 +313,54 @@
     document.querySelectorAll('[data-mode]').forEach((button) => {
       button.classList.toggle('active', button.dataset.mode === mode);
     });
+  }
+
+  // Builds one row of colour swatches: the presets, then a custom one
+  // that opens the device's colour picker. `target` is 'snake' or 'food'.
+  function buildSwatches(target) {
+    const row = document.getElementById(`${target}-swatches`);
+
+    PRESETS[target].forEach(([hex, name]) => {
+      const button = document.createElement('button');
+      button.className = 'swatch';
+      button.style.setProperty('--c', hex);
+      button.dataset.hex = hex;
+      button.setAttribute('aria-label', name);
+      button.addEventListener('pointerdown', (event) => {
+        event.preventDefault();
+        send(`${target} ${hex}`);
+      });
+      row.appendChild(button);
+    });
+
+    const custom = document.createElement('label');
+    custom.className = 'swatch custom';
+    custom.setAttribute('aria-label', 'Custom colour');
+    const picker = document.createElement('input');
+    picker.type = 'color';
+    // 'change' fires once, when the picker is closed or confirmed. ('input'
+    // would fire continuously while dragging, and each one would be saved
+    // to the ESP32's flash.)
+    picker.addEventListener('change', () => send(`${target} ${picker.value}`));
+    custom.appendChild(picker);
+    row.appendChild(custom);
+  }
+
+  // Marks the swatch matching the ESP32's colour. If it isn't a preset,
+  // the custom swatch lights up and shows it.
+  function showColour(target, hex) {
+    const row = document.getElementById(`${target}-swatches`);
+    let matched = false;
+    row.querySelectorAll('button.swatch').forEach((button) => {
+      const isThis = button.dataset.hex === hex;
+      button.classList.toggle('active', isThis);
+      if (isThis) matched = true;
+    });
+    const custom = row.querySelector('.custom');
+    custom.classList.toggle('active', !matched);
+    custom.classList.toggle('filled', !matched);
+    custom.style.setProperty('--c', hex);
+    custom.querySelector('input').value = hex;
   }
 
   // Briefly highlights a button, so every press gets visible feedback.
@@ -349,6 +451,8 @@
   });
 
   // ---------- Start ----------
+  buildSwatches('snake');
+  buildSwatches('food');
   showState();
   showMode(mode);
   connect();

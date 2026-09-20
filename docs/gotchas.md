@@ -19,6 +19,10 @@ Carried over from the first Snake build, plus anything new found during this one
 - **`%` with negative numbers.** In C++, `-1 % 32` is `-1`. Add the width first: `(x + 32) % 32`.
 - **Flash wears out with repeated writes.** Save settings only when they change, never every loop.
 - **Preferences names are short.** Namespace and key names can be at most 15 characters.
+- **Draw on a faster clock than you move.** Redrawing only when the snake moves (4 times a second) makes effects look choppy. Movement uses `TICK_MS`, drawing uses `FRAME_MS`.
+- **Dark colours vanish on LEDs.** Colours are normalised to full strength; overall brightness stays controlled by `BRIGHTNESS`.
+- **Colour pickers fire `input` continuously.** Send on `change` instead, or every drag step becomes a flash write.
+- **The page blocks scrolling (`touch-action: none`).** Anything that must scroll, like the Settings card, needs `touch-action: pan-y`.
 
 ## Arduino IDE
 - **Library Manager looks empty** while a board package is installing. Wait for the install to finish, then search again.

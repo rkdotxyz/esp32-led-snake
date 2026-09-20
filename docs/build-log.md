@@ -212,3 +212,29 @@
 - [x] Walls and wrap both behave correctly
 - [x] Settings disabled during a game; mode remembered after power-off
 - [x] Committed and tagged v1.1
+
+
+## Phase 8: Colours and effects (v2.0)
+
+**Date:** 2026-09-20
+
+**What I did**
+- Split drawing from movement: the snake still moves every `TICK_MS` (250 ms), but the game is now redrawn every `FRAME_MS` (30 ms), so effects animate smoothly between moves.
+- `theme.h/.cpp`:
+  - Snake and food colours, stored as `0xRRGGBB`.
+  - `themeNormalise()` keeps a colour's hue but raises its strongest channel to 255, so dark picks stay visible at low brightness (`#336699` → `#55aaff`; black → white).
+  - Effects: head pulses toward white (`beatsin8` + `blend`), body fades from neck to tail, food glows softly, eating sends a small spreading cross of sparkle.
+- `settings`: colours saved in flash with `getUInt` / `putUInt` (keys `snake`, `food`), only when they change.
+- `web_control`: new `snake #rrggbb` / `food #rrggbb` messages; malformed ones are ignored.
+- Settings panel: preset swatches plus a colour picker for snake and food. The picker sends on `change` (not `input`), so dragging doesn't write to flash repeatedly.
+- The attract screen uses the theme, so colour changes preview on the matrix immediately.
+- All settings (edges and colours) handled in one place; only accepted between games.
+
+**Results**
+- Colours apply instantly, persist after power-off, and the phone always shows the colour the matrix actually uses.
+
+**Checklist**
+- [x] Presets and custom colours work for snake and food
+- [x] Head pulse, tail fade, food glow and sparkle look right
+- [x] Colours remembered after unplugging
+- [x] Committed and tagged v2.0

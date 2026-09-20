@@ -2,7 +2,7 @@
 
 Classic Snake on a 32×8 WS2812B LED matrix, driven by an ESP32 and played from your phone's browser over the ESP32's own WiFi hotspot. No router, no app: join the network, open the page, play.
 
-> **Status:** v1.1 complete. Walls or wrap-around edges, chosen in Settings and remembered after power-off. Next up: snake and food colours, and visual effects.
+> **Status:** v2.0 complete. Snake and food colours (presets or any custom colour), plus effects: pulsing head, fading tail, glowing food and an eat sparkle. Next up: extras.
 
 <!-- Add a GIF here once v1.0 works: ![Demo](docs/media/demo.gif) -->
 
@@ -12,7 +12,7 @@ Classic Snake on a 32×8 WS2812B LED matrix, driven by an ESP32 and played from 
 |---|---|---|
 | v1.0 | Attract screen, core Snake (move, eat, grow, die), game over + score, phone controller over the ESP32's hotspot | Done |
 | v1.1 | Wall mode and wrap-around mode, remembered after power-off | Done |
-| v2.0 | Snake and food colours (presets + custom picker), pulsing head, fading tail, eat sparkle | Planned |
+| v2.0 | Snake and food colours (presets + custom picker), pulsing head, fading tail, glowing food, eat sparkle | Done |
 
 ## How it works
 
@@ -29,7 +29,7 @@ Classic Snake on a 32×8 WS2812B LED matrix, driven by an ESP32 and played from 
 4. Press any direction to start. Steer with the d-pad, swipes, or arrow keys / W A S D.
 5. **P** or Space pauses; **R** restarts. Locking your phone mid-game pauses automatically.
 5. **P** or Space pauses; **R** restarts. Locking your phone mid-game pauses automatically.
-6. Between games, tap **Settings** to choose walls or wrap-around edges.
+6. 6. Between games, tap **Settings** to choose walls or wrap-around edges, and the snake and food colours. Changes preview on the attract screen straight away and are remembered after power-off.
 
 ## Hardware
 
@@ -90,7 +90,7 @@ docs/                    build log, gotchas, media
 - [x] Phase 5: Browser controller for phone and desktop
 - [x] Phase 6: Attract screen and game over (v1.0)
 - [x] Phase 7: Wall and wrap modes (v1.1)
-- [ ] Phase 8: Themes and effects (v2.0)
+- [x] Phase 8: Themes and effects (v2.0)
 - [ ] Phase 9: Extras
 - [ ] Phase 10: Document and publish
 

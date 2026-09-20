@@ -24,6 +24,10 @@ static bool restartRequested = false;
 static bool pauseRequested = false;
 static bool modeRequested = false;
 static WallMode requestedMode = MODE_WALLS;
+static bool snakeColourRequested = false;
+static uint32_t requestedSnakeColour = 0;
+static bool foodColourRequested = false;
+static uint32_t requestedFoodColour = 0;
 
 // The lock that guards everything above.
 static portMUX_TYPE inputLock = portMUX_INITIALIZER_UNLOCKED;
@@ -63,6 +67,22 @@ void inputRequestMode(WallMode m) {
   portENTER_CRITICAL(&inputLock);
   requestedMode = m;
   modeRequested = true;
+  portEXIT_CRITICAL(&inputLock);
+}
+
+
+void inputRequestSnakeColour(uint32_t rgb) {
+  portENTER_CRITICAL(&inputLock);
+  requestedSnakeColour = rgb;
+  snakeColourRequested = true;
+  portEXIT_CRITICAL(&inputLock);
+}
+
+
+void inputRequestFoodColour(uint32_t rgb) {
+  portENTER_CRITICAL(&inputLock);
+  requestedFoodColour = rgb;
+  foodColourRequested = true;
   portEXIT_CRITICAL(&inputLock);
 }
 
@@ -126,6 +146,30 @@ bool inputModeRequested(WallMode &m) {
   if (requested) {
     m = requestedMode;
     modeRequested = false;
+  }
+  portEXIT_CRITICAL(&inputLock);
+  return requested;
+}
+
+
+bool inputSnakeColourRequested(uint32_t &rgb) {
+  portENTER_CRITICAL(&inputLock);
+  bool requested = snakeColourRequested;
+  if (requested) {
+    rgb = requestedSnakeColour;
+    snakeColourRequested = false;
+  }
+  portEXIT_CRITICAL(&inputLock);
+  return requested;
+}
+
+
+bool inputFoodColourRequested(uint32_t &rgb) {
+  portENTER_CRITICAL(&inputLock);
+  bool requested = foodColourRequested;
+  if (requested) {
+    rgb = requestedFoodColour;
+    foodColourRequested = false;
   }
   portEXIT_CRITICAL(&inputLock);
   return requested;

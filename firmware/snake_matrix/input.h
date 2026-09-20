@@ -19,6 +19,8 @@ bool inputNextDirection(Direction &d);      // take the oldest queued direction,
 bool inputRestartRequested();               // true once after a restart request
 bool inputPauseRequested();                 // true once after a pause request
 bool inputModeRequested(WallMode &m);       // true once after a mode change request, with the mode
+bool inputSnakeColourRequested(uint32_t &rgb);  // true once after a snake colour request
+bool inputFoodColourRequested(uint32_t &rgb);   // true once after a food colour request
 void inputClear();                          // forget everything pending (new game)
 
 
@@ -27,3 +29,5 @@ void inputPushDirection(Direction d);       // queue a direction
 void inputRequestRestart();                 // ask for a new game
 void inputRequestPause();                   // ask to pause or resume
 void inputRequestMode(WallMode m);          // ask for walls or wrap
+void inputRequestSnakeColour(uint32_t rgb); // ask for a snake colour (0xRRGGBB)
+void inputRequestFoodColour(uint32_t rgb);  // ask for a food colour

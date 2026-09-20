@@ -8,8 +8,10 @@
 //                 +--> input --> snake_game --> drawGame() --> display
 //   web_control --+                                  screens --^
 //
-// Phase 7: wall and wrap-around modes, chosen in the controller's
-// Settings between games, and remembered after power-off.
+// Phase 8: snake and food colours chosen in Settings, plus effects: a
+// pulsing head, a fading tail, pulsing food and an eat sparkle. The game
+// now redraws on its own fast clock (FRAME_MS), separate from the
+// snake's movement clock (TICK_MS), so effects stay smooth.
 //
 // Serial Monitor: 115200 baud. Serial keys W A S D, R, P still work.
 // =====================================================================
@@ -22,6 +24,7 @@
 #include "web_control.h"
 #include "screens.h"
 #include "settings.h"
+#include "theme.h"
 
 AppState state = STATE_ATTRACT;
 unsigned long stateStart = 0;     // when the current state began
@@ -34,11 +37,15 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
   Serial.println();
-  Serial.println("snake_matrix: phase 7");
+  Serial.println("snake_matrix: phase 8");
 
+  // Restore the saved settings.
   settingsBegin();
-  gameSetWallMode(settingsWallMode());   // restore the last mode used
-  Serial.printf("Edges: %s\r\n", modeName());
+  gameSetWallMode(settingsWallMode());
+  themeSetSnakeColour(settingsSnakeColour());
+  themeSetFoodColour(settingsFoodColour());
+  Serial.printf("Edges: %s, snake #%06lx, food #%06lx\r\n", modeName(),
+                (unsigned long)themeSnakeColour(), (unsigned long)themeFoodColour());
 
   displayBegin();
   webBegin();
@@ -62,25 +69,14 @@ void loop() {
     return;
   }
 
-  // Mode changes are only allowed between games. The page's Settings
-  // button is disabled during a game too, but the ESP32 is the one that
-  // decides: a second phone, or an old cached page, could still ask.
-  WallMode requestedMode;
-  if (inputModeRequested(requestedMode)) {
-    if (state == STATE_PLAYING || state == STATE_PAUSED) {
-      Serial.println("Edges can only change between games");
-      sendStatus();                  // re-confirm the current mode to the phones
-    } else {
-      applyWallMode(requestedMode);
-    }
-  }
+  handleSettingsRequests();
 
   // 2. Whatever the current state needs to do.
   unsigned long now = millis();
   switch (state) {
     case STATE_ATTRACT:   updateAttract(now);                 break;
     case STATE_PLAYING:   updatePlaying(now, pausePressed);   break;
-    case STATE_PAUSED:    updatePaused(pausePressed);         break;
+    case STATE_PAUSED:    updatePaused(now, pausePressed);    break;
     case STATE_GAME_OVER: updateGameOver(now);                break;
     case STATE_SCORE:     updateScore(now);                   break;
   }
@@ -102,42 +98,61 @@ void updateAttract(unsigned long now) {
 }
 
 
+// Two clocks run here, independently:
+//   TICK_MS  (250 ms): the snake moves one square.
+//   FRAME_MS (30 ms):  the picture is redrawn, so effects animate smoothly
+//                      even while the snake is standing still between steps.
 void updatePlaying(unsigned long now, bool pausePressed) {
   if (pausePressed) {
     enterState(STATE_PAUSED);
     return;
   }
-  if (now - lastTick < TICK_MS) {
-    return;                          // not time to move yet
-  }
-  lastTick = now;
 
-  Direction d;
-  if (inputNextDirection(d)) {       // one queued turn per step
-    gameTurn(d);
+  if (now - lastTick >= TICK_MS) {
+    lastTick = now;
+
+    Direction d;
+    if (inputNextDirection(d)) {     // one queued turn per step
+      gameTurn(d);
+    }
+
+    int scoreBefore = gameScore();
+    gameStep();
+
+    if (gameIsOver()) {
+      enterState(STATE_GAME_OVER);
+      return;
+    }
+    if (gameScore() != scoreBefore) {
+      Point head = gameSegment(0);   // the head is where the food was
+      themeStartSparkle(head.x, head.y);
+      sendStatus();                  // phones update their score
+    }
   }
 
-  int scoreBefore = gameScore();
-  gameStep();
-
-  if (gameIsOver()) {
-    enterState(STATE_GAME_OVER);
-    return;
-  }
-  if (gameScore() != scoreBefore) {
-    sendStatus();                    // phones update their score
-  }
-  drawGame();
+  drawIfDue(now);
 }
 
 
-void updatePaused(bool pausePressed) {
+void updatePaused(unsigned long now, bool pausePressed) {
   Direction d;
   if (inputNextDirection(d)) {       // a direction resumes and turns
     gameTurn(d);
     enterState(STATE_PLAYING);
-  } else if (pausePressed) {         // or the pause button again
+    return;
+  }
+  if (pausePressed) {                // or the pause button again
     enterState(STATE_PLAYING);
+    return;
+  }
+  drawIfDue(now);                    // keeps the head pulsing while paused
+}
+
+
+void drawIfDue(unsigned long now) {
+  if (now - lastFrame >= FRAME_MS) {
+    lastFrame = now;
+    drawGame();
   }
 }
 
@@ -211,14 +226,62 @@ void startGame(Direction firstMove) {
 }
 
 
-// Switches walls/wrap, saves it, and tells every controller.
+// ---------- Settings from the controller ----------
+
+// Settings only change between games. The page's Settings button is
+// disabled during a game too, but the ESP32 is the one that decides:
+// a second phone, or an old cached page, could still ask.
+void handleSettingsRequests() {
+  WallMode mode;
+  uint32_t snakeRgb;
+  uint32_t foodRgb;
+  bool wantsMode = inputModeRequested(mode);
+  bool wantsSnake = inputSnakeColourRequested(snakeRgb);
+  bool wantsFood = inputFoodColourRequested(foodRgb);
+
+  if (!wantsMode && !wantsSnake && !wantsFood) {
+    return;
+  }
+
+  if (state == STATE_PLAYING || state == STATE_PAUSED) {
+    Serial.println("Settings can only change between games");
+  } else {
+    if (wantsMode)  applyWallMode(mode);
+    if (wantsSnake) applySnakeColour(snakeRgb);
+    if (wantsFood)  applyFoodColour(foodRgb);
+  }
+  sendStatus();                      // confirm the real settings to the phones either way
+}
+
+
+// Each apply function only writes to flash when the value really changes.
+
 void applyWallMode(WallMode m) {
-  if (m != gameWallMode()) {         // only write to flash when it really changes
+  if (m != gameWallMode()) {
     gameSetWallMode(m);
     settingsSaveWallMode(m);
     Serial.printf("Edges: %s\r\n", modeName());
   }
-  sendStatus();                      // confirm to the phones either way
+}
+
+
+void applySnakeColour(uint32_t rgb) {
+  rgb = themeNormalise(rgb);         // full brightness, same hue
+  if (rgb != themeSnakeColour()) {
+    themeSetSnakeColour(rgb);
+    settingsSaveSnakeColour(rgb);
+    Serial.printf("Snake colour: #%06lx\r\n", (unsigned long)rgb);
+  }
+}
+
+
+void applyFoodColour(uint32_t rgb) {
+  rgb = themeNormalise(rgb);
+  if (rgb != themeFoodColour()) {
+    themeSetFoodColour(rgb);
+    settingsSaveFoodColour(rgb);
+    Serial.printf("Food colour: #%06lx\r\n", (unsigned long)rgb);
+  }
 }
 
 
@@ -271,6 +334,12 @@ void sendStatus() {
   snprintf(message, sizeof(message), "mode %s", modeName());
   webSend(message);
 
+  // %06lx = hex, at least 6 digits, padded with zeros: 0x00FF40 -> "00ff40"
+  snprintf(message, sizeof(message), "snake #%06lx", (unsigned long)themeSnakeColour());
+  webSend(message);
+  snprintf(message, sizeof(message), "food #%06lx", (unsigned long)themeFoodColour());
+  webSend(message);
+
   if (state == STATE_GAME_OVER || state == STATE_SCORE) {
     snprintf(message, sizeof(message), "reason %s", gameOverReason());
     webSend(message);                // before "state over", so the page has it ready
@@ -283,19 +352,23 @@ void sendStatus() {
 
 // ---------- Drawing the game itself ----------
 
+// Layers, back to front: food, sparkle, body, head. Later layers are
+// drawn over earlier ones, so the snake always sits on top.
 void drawGame() {
   displayClear();
 
   Point food = gameFood();
-  displaySetPixel(food.x, food.y, FOOD_COLOUR);
+  displaySetPixel(food.x, food.y, themeFood());
 
-  // Body first (tail to neck), then the head on top.
-  for (int i = gameLength() - 1; i >= 1; i--) {
+  themeDrawSparkle();
+
+  int length = gameLength();
+  for (int i = length - 1; i >= 1; i--) {
     Point p = gameSegment(i);
-    displaySetPixel(p.x, p.y, BODY_COLOUR);
+    displaySetPixel(p.x, p.y, themeBody(i, length));
   }
   Point head = gameSegment(0);
-  displaySetPixel(head.x, head.y, HEAD_COLOUR);
+  displaySetPixel(head.x, head.y, themeHead());
 
   displayShow();
 }

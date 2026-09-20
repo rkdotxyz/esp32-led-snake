@@ -6,6 +6,7 @@
 #include "config.h"
 #include "display.h"
 #include "snake_game.h"
+#include "theme.h"
 
 
 // =====================================================================
@@ -13,6 +14,7 @@
 // ---------------------------------------------------------------------
 // A demo snake glides in a zigzag across an otherwise dark board,
 // eating apples placed along its path and growing, then starts over.
+// It uses the chosen theme, so it previews colour changes straight away.
 //
 // Its route is a loop that visits every square exactly once:
 //   - rows 0-7 zigzag across columns 1-31 (right, left, right...)
@@ -60,7 +62,7 @@ void screensDrawAttract(unsigned long elapsed) {
   if (apple < LOOP_LENGTH) {
     int ax, ay;
     loopPoint(apple, ax, ay);
-    displaySetPixel(ax, ay, FOOD_COLOUR);
+    displaySetPixel(ax, ay, themeFood());
   }
 
   // Tail first, head last so it's drawn on top. Segments behind the head
@@ -74,12 +76,9 @@ void screensDrawAttract(unsigned long elapsed) {
     loopPoint(square, x, y);
 
     if (i == 0) {
-      displaySetPixel(x, y, HEAD_COLOUR);
+      displaySetPixel(x, y, themeHead());
     } else {
-      // Fade toward the tail. fadeToBlackBy(0) = unchanged, 255 = black.
-      CRGB colour = BODY_COLOUR;
-      colour.fadeToBlackBy(i * 160 / length);
-      displaySetPixel(x, y, colour);
+      displaySetPixel(x, y, themeBody(i, length));
     }
   }
 
