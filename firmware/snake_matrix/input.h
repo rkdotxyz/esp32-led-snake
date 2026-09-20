@@ -18,6 +18,7 @@ void inputUpdate();                         // read Serial keys; call every loop
 bool inputNextDirection(Direction &d);      // take the oldest queued direction, if any
 bool inputRestartRequested();               // true once after a restart request
 bool inputPauseRequested();                 // true once after a pause request
+bool inputModeRequested(WallMode &m);       // true once after a mode change request, with the mode
 void inputClear();                          // forget everything pending (new game)
 
 
@@ -25,3 +26,4 @@ void inputClear();                          // forget everything pending (new ga
 void inputPushDirection(Direction d);       // queue a direction
 void inputRequestRestart();                 // ask for a new game
 void inputRequestPause();                   // ask to pause or resume
+void inputRequestMode(WallMode m);          // ask for walls or wrap

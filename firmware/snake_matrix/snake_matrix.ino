@@ -8,8 +8,8 @@
 //                 +--> input --> snake_game --> drawGame() --> display
 //   web_control --+                                  screens --^
 //
-// Phase 6: attract screen, game-over animation, final score on the
-// matrix. With the phase 5 controller, this is v1.0.
+// Phase 7: wall and wrap-around modes, chosen in the controller's
+// Settings between games, and remembered after power-off.
 //
 // Serial Monitor: 115200 baud. Serial keys W A S D, R, P still work.
 // =====================================================================
@@ -21,6 +21,7 @@
 #include "input.h"
 #include "web_control.h"
 #include "screens.h"
+#include "settings.h"
 
 AppState state = STATE_ATTRACT;
 unsigned long stateStart = 0;     // when the current state began
@@ -33,7 +34,11 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
   Serial.println();
-  Serial.println("snake_matrix: phase 6");
+  Serial.println("snake_matrix: phase 7");
+
+  settingsBegin();
+  gameSetWallMode(settingsWallMode());   // restore the last mode used
+  Serial.printf("Edges: %s\r\n", modeName());
 
   displayBegin();
   webBegin();
@@ -55,6 +60,19 @@ void loop() {
   if (restartPressed) {
     enterState(STATE_ATTRACT);
     return;
+  }
+
+  // Mode changes are only allowed between games. The page's Settings
+  // button is disabled during a game too, but the ESP32 is the one that
+  // decides: a second phone, or an old cached page, could still ask.
+  WallMode requestedMode;
+  if (inputModeRequested(requestedMode)) {
+    if (state == STATE_PLAYING || state == STATE_PAUSED) {
+      Serial.println("Edges can only change between games");
+      sendStatus();                  // re-confirm the current mode to the phones
+    } else {
+      applyWallMode(requestedMode);
+    }
   }
 
   // 2. Whatever the current state needs to do.
@@ -193,6 +211,17 @@ void startGame(Direction firstMove) {
 }
 
 
+// Switches walls/wrap, saves it, and tells every controller.
+void applyWallMode(WallMode m) {
+  if (m != gameWallMode()) {         // only write to flash when it really changes
+    gameSetWallMode(m);
+    settingsSaveWallMode(m);
+    Serial.printf("Edges: %s\r\n", modeName());
+  }
+  sendStatus();                      // confirm to the phones either way
+}
+
+
 // If the last controller disconnects mid-game (phone locked, walked
 // away), pause instead of letting the snake crash on its own.
 void watchControllers() {
@@ -228,10 +257,18 @@ const char* stateName() {
 }
 
 
+const char* modeName() {
+  return gameWallMode() == MODE_WRAP ? "wrap" : "walls";
+}
+
+
 void sendStatus() {
   char message[64];
 
   snprintf(message, sizeof(message), "score %d", gameScore());
+  webSend(message);
+
+  snprintf(message, sizeof(message), "mode %s", modeName());
   webSend(message);
 
   if (state == STATE_GAME_OVER || state == STATE_SCORE) {

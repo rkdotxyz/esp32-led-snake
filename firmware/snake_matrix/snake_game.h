@@ -22,6 +22,13 @@ enum Direction {
 };
 
 
+// What happens at the edges of the board (new in phase 7).
+enum WallMode {
+  MODE_WALLS,   // the edges are walls: touching one ends the game
+  MODE_WRAP     // leave one edge, come back in at the opposite one
+};
+
+
 // A position on the grid. int8_t is a small whole number (-128 to 127),
 // plenty for a 32 x 8 board, and it keeps the snake's memory small.
 struct Point {
@@ -34,6 +41,7 @@ struct Point {
 void gameReset();                 // start a new game
 void gameTurn(Direction d);       // request a turn; reversing into yourself is ignored
 void gameStep();                  // move the snake one square; call once per tick
+void gameSetWallMode(WallMode m); // walls or wrap; takes effect from the next step
 
 
 // ---------- Reading the game (for drawing and messages) ----------
@@ -43,3 +51,4 @@ Point gameFood();                 // where the food is
 int gameScore();                  // how many pieces of food eaten
 bool gameIsOver();                // true once the snake has died
 const char* gameOverReason();     // why the game ended, as text
+WallMode gameWallMode();          // the current edge rule

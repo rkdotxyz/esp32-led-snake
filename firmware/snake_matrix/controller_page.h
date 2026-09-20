@@ -82,6 +82,31 @@ const char CONTROLLER_PAGE[] = R"rawliteral(<!DOCTYPE html>
 
   .actions { display: flex; gap: 12px; margin-top: 12px; }
   .actions button { flex: 1; padding: 16px; font-size: 17px; border-radius: 14px; }
+  button:disabled { opacity: 0.35; }
+
+  /* Settings panel: a dark backdrop with a card anchored to the bottom */
+  .sheet {
+    position: fixed; inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex; align-items: flex-end; justify-content: center;
+    padding: 16px 16px max(16px, env(safe-area-inset-bottom));
+  }
+  .sheet[hidden] { display: none; }
+  .sheet-card {
+    width: min(100%, 480px);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 20px;
+  }
+  .sheet-card h2 { margin: 0 0 16px; font-size: 20px; }
+  .setting { display: flex; flex-direction: column; gap: 12px; padding-bottom: 20px; }
+  .setting-label b { display: block; font-size: 16px; margin-bottom: 4px; }
+  .setting-label span { color: var(--muted); font-size: 14px; }
+  .modes { display: flex; gap: 8px; }
+  .modes button { flex: 1; padding: 12px; font-size: 16px; border-radius: 12px; }
+  .modes button.active { border-color: var(--green); color: var(--green); }
+  .done { width: 100%; padding: 14px; font-size: 17px; border-radius: 14px; }
   .hint { text-align: center; color: var(--muted); font-size: 13px; margin: 12px 0 0; }
   /* touch screens don't need the keyboard hint */
   @media (hover: none) { .hint { display: none; } }
@@ -109,8 +134,30 @@ const char CONTROLLER_PAGE[] = R"rawliteral(<!DOCTYPE html>
 <div class="actions">
   <button id="pause">Pause</button>
   <button id="restart">Restart</button>
+  <button id="open-settings">Settings</button>
 </div>
 <p class="hint">Keyboard: arrow keys or W A S D · R restart · P or Space pause</p>
+
+<!-- Settings: a panel that slides over the controller. Only available
+     between games; the button is disabled while a game is on. -->
+<div id="settings" class="sheet" hidden>
+  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <h2 id="settings-title">Settings</h2>
+
+    <div class="setting">
+      <div class="setting-label">
+        <b>Edges</b>
+        <span>Walls end the game. Wrap brings you back in on the opposite side.</span>
+      </div>
+      <div class="modes" role="group" aria-label="Edges">
+        <button data-mode="walls">Walls</button>
+        <button data-mode="wrap">Wrap</button>
+      </div>
+    </div>
+
+    <button id="close-settings" class="done">Done</button>
+  </div>
+</div>
 
 <script>
   // ---------- Page elements ----------
@@ -120,10 +167,14 @@ const char CONTROLLER_PAGE[] = R"rawliteral(<!DOCTYPE html>
   const statusEl = document.getElementById('status');
   const pauseBtn = document.getElementById('pause');
   const restartBtn = document.getElementById('restart');
+  const settingsBtn = document.getElementById('open-settings');
+  const settingsSheet = document.getElementById('settings');
+  const closeSettingsBtn = document.getElementById('close-settings');
 
   // ---------- Game state, as told to us by the ESP32 ----------
   let state = 'ready';
   let reason = '';
+  let mode = 'walls';
   const statusText = {
     ready: 'Press any direction to start',
     playing: '',
@@ -172,6 +223,7 @@ const char CONTROLLER_PAGE[] = R"rawliteral(<!DOCTYPE html>
 
     if (key === 'score') scoreEl.textContent = value;
     if (key === 'reason') reason = value;
+    if (key === 'mode') showMode(value);
     if (key === 'state') {
       state = value;
       showState();
@@ -183,6 +235,41 @@ const char CONTROLLER_PAGE[] = R"rawliteral(<!DOCTYPE html>
       ? `Game over: ${reason}. Any direction plays again`
       : (statusText[state] || '');
     pauseBtn.textContent = state === 'paused' ? 'Resume' : 'Pause';
+    updateSettingsButton();
+  }
+
+  // ---------- Settings panel ----------
+  // Settings only change between games. If a game starts while the panel
+  // is open (say, from a second phone), the panel closes itself.
+  function gameInProgress() {
+    return state === 'playing' || state === 'paused';
+  }
+
+  function updateSettingsButton() {
+    settingsBtn.disabled = gameInProgress();
+    if (gameInProgress()) closeSettings();
+  }
+
+  function openSettings() {
+    if (gameInProgress()) return;
+    settingsSheet.hidden = false;
+  }
+
+  function closeSettings() {
+    settingsSheet.hidden = true;
+  }
+
+  function settingsOpen() {
+    return !settingsSheet.hidden;
+  }
+
+  // Highlights the current edge mode. The page only changes it once the
+  // ESP32 confirms, so it can never show a mode the game isn't using.
+  function showMode(newMode) {
+    mode = newMode;
+    document.querySelectorAll('[data-mode]').forEach((button) => {
+      button.classList.toggle('active', button.dataset.mode === mode);
+    });
   }
 
   // Briefly highlights a button, so every press gets visible feedback.
@@ -201,6 +288,19 @@ const char CONTROLLER_PAGE[] = R"rawliteral(<!DOCTYPE html>
       flash(button);
     });
   });
+  document.querySelectorAll('[data-mode]').forEach((button) => {
+    button.addEventListener('pointerdown', (event) => {
+      event.preventDefault();
+      send(`mode ${button.dataset.mode}`);
+      flash(button);
+    });
+  });
+  settingsBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); openSettings(); });
+  closeSettingsBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); closeSettings(); });
+  // Tapping the dark backdrop (outside the card) also closes it.
+  settingsSheet.addEventListener('pointerdown', (e) => {
+    if (e.target === settingsSheet) closeSettings();
+  });
   pauseBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); send('pause'); flash(pauseBtn); });
   restartBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); send('restart'); flash(restartBtn); });
 
@@ -212,6 +312,7 @@ const char CONTROLLER_PAGE[] = R"rawliteral(<!DOCTYPE html>
   let swipeStart = null;
 
   document.addEventListener('pointerdown', (event) => {
+    if (settingsOpen()) return;                // no steering behind the panel
     if (event.target.closest('button')) return;
     swipeStart = { x: event.clientX, y: event.clientY };
   });
@@ -246,6 +347,10 @@ const char CONTROLLER_PAGE[] = R"rawliteral(<!DOCTYPE html>
   document.addEventListener('keydown', (event) => {
     if (event.repeat) return;                  // ignore auto-repeat while a key is held
     const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    if (settingsOpen()) {                      // while the panel is open, only Escape works
+      if (key === 'Escape') closeSettings();
+      return;
+    }
     const command = keyCommands[key];
     if (!command) return;
     event.preventDefault();                    // stop arrows and space scrolling the page
@@ -256,6 +361,7 @@ const char CONTROLLER_PAGE[] = R"rawliteral(<!DOCTYPE html>
 
   // ---------- Start ----------
   showState();
+  showMode(mode);
   connect();
 </script>
 </body>

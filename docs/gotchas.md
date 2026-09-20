@@ -16,6 +16,9 @@ Carried over from the first Snake build, plus anything new found during this one
 - **Very dim colours disappear.** Every colour is scaled by `BRIGHTNESS` (40/255), so values below about 7 round down to fully off.
 - **Dithering shimmers at low brightness.** FastLED flickers dim pixels between two levels to fake in-between shades. Switched off with `FastLED.setDither(DISABLE_DITHER)`.
 - **Custom types in function signatures need a header.** Functions in the `.ino` that take `AppState` only compile because the enum lives in `app_state.h` (see the OLED project's auto-prototype problem).
+- **`%` with negative numbers.** In C++, `-1 % 32` is `-1`. Add the width first: `(x + 32) % 32`.
+- **Flash wears out with repeated writes.** Save settings only when they change, never every loop.
+- **Preferences names are short.** Namespace and key names can be at most 15 characters.
 
 ## Arduino IDE
 - **Library Manager looks empty** while a board package is installing. Wait for the install to finish, then search again.

@@ -189,3 +189,26 @@
 - [x] Pause, auto-pause and restart still work
 - [x] Demo clip recorded in docs/media/
 - [x] Committed and tagged v1.0
+
+
+## Phase 7: Walls and wrap (v1.1)
+
+**Date:** 2026-09-20
+
+**What I did**
+- `snake_game`: new `WallMode` (walls / wrap). In wrap mode the head re-enters at the opposite edge using `(x + WIDTH) % WIDTH`; the `+ WIDTH` is needed because in C++ `-1 % 32` is `-1`, not `31`.
+- `settings.h/.cpp`: saves the mode in the ESP32's flash with the Preferences library (namespace `snake`, key `wrap`). Only written when the mode actually changes, to spare the flash.
+- `input` / `web_control`: new `mode walls` / `mode wrap` messages, passed through the same locked queue as other commands.
+- Controller page: a Settings button opens a panel with the Edges choice. The page highlights a mode only after the ESP32 confirms it.
+
+**Design changes after testing**
+- Edges moved from the main controller into a Settings panel, and can only change between games. The Settings button is disabled during a game, and the ESP32 also rejects mid-game requests. The panel will hold colour settings in phase 8.
+
+**Results**
+- Wrap works on all four edges; self-collision still ends the game.
+- Mode survives unplugging.
+
+**Checklist**
+- [x] Walls and wrap both behave correctly
+- [x] Settings disabled during a game; mode remembered after power-off
+- [x] Committed and tagged v1.1

@@ -22,6 +22,7 @@ static Point food;
 static int score = 0;
 static bool over = false;
 static const char* reason = "";
+static WallMode wallMode = MODE_WALLS;
 
 
 // ---------- Helpers (private to this file) ----------
@@ -113,11 +114,22 @@ void gameStep() {
   if (dir == DIR_LEFT)  next.x--;
   if (dir == DIR_RIGHT) next.x++;
 
-  // 2. Hit a wall? For now the edges are walls. Wrap-around comes in phase 7.
-  if (next.x < 0 || next.x >= MATRIX_WIDTH || next.y < 0 || next.y >= MATRIX_HEIGHT) {
-    over = true;
-    reason = "hit a wall";
-    return;
+  // 2. Off the edge? Depends on the mode.
+  bool offBoard = next.x < 0 || next.x >= MATRIX_WIDTH ||
+                  next.y < 0 || next.y >= MATRIX_HEIGHT;
+  if (offBoard) {
+    if (wallMode == MODE_WALLS) {
+      over = true;
+      reason = "hit a wall";
+      return;
+    }
+    // Wrap: % (remainder) folds the position back onto the board.
+    //   x = 32 -> 32 % 32 = 0   (off the right, back in on the left)
+    //   x = -1 -> (-1 + 32) % 32 = 31
+    // Adding the width first keeps the number positive, because in C++
+    // -1 % 32 is -1, not 31.
+    next.x = (int8_t)((next.x + MATRIX_WIDTH) % MATRIX_WIDTH);
+    next.y = (int8_t)((next.y + MATRIX_HEIGHT) % MATRIX_HEIGHT);
   }
 
   // 3. Eating this step?
@@ -154,6 +166,11 @@ void gameStep() {
 }
 
 
+void gameSetWallMode(WallMode m) {
+  wallMode = m;
+}
+
+
 // ---------- Reading the game ----------
 
 int gameLength()            { return length; }
@@ -162,3 +179,4 @@ Point gameFood()            { return food; }
 int gameScore()             { return score; }
 bool gameIsOver()           { return over; }
 const char* gameOverReason() { return reason; }
+WallMode gameWallMode()     { return wallMode; }

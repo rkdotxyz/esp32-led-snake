@@ -22,6 +22,8 @@ static Direction queue[QUEUE_SIZE];
 static int queueCount = 0;
 static bool restartRequested = false;
 static bool pauseRequested = false;
+static bool modeRequested = false;
+static WallMode requestedMode = MODE_WALLS;
 
 // The lock that guards everything above.
 static portMUX_TYPE inputLock = portMUX_INITIALIZER_UNLOCKED;
@@ -53,6 +55,14 @@ void inputRequestRestart() {
 void inputRequestPause() {
   portENTER_CRITICAL(&inputLock);
   pauseRequested = true;
+  portEXIT_CRITICAL(&inputLock);
+}
+
+
+void inputRequestMode(WallMode m) {
+  portENTER_CRITICAL(&inputLock);
+  requestedMode = m;
+  modeRequested = true;
   portEXIT_CRITICAL(&inputLock);
 }
 
@@ -105,6 +115,18 @@ bool inputPauseRequested() {
   portENTER_CRITICAL(&inputLock);
   bool requested = pauseRequested;
   pauseRequested = false;
+  portEXIT_CRITICAL(&inputLock);
+  return requested;
+}
+
+
+bool inputModeRequested(WallMode &m) {
+  portENTER_CRITICAL(&inputLock);
+  bool requested = modeRequested;
+  if (requested) {
+    m = requestedMode;
+    modeRequested = false;
+  }
   portEXIT_CRITICAL(&inputLock);
   return requested;
 }

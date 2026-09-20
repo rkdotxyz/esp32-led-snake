@@ -10,9 +10,11 @@
 //
 // Messages are short plain words, so they're easy to read and debug:
 //   browser -> ESP32:  up  down  left  right  restart  pause
+//                      mode walls  mode wrap
 //   ESP32 -> browser:  state ready|playing|paused|over
 //                      score 7
 //                      reason hit a wall
+//                      mode walls|wrap
 // =====================================================================
 
 #include <WiFi.h>
@@ -38,6 +40,8 @@ static void handleMessage(const char* text) {
   else if (strcmp(text, "right") == 0)   inputPushDirection(DIR_RIGHT);
   else if (strcmp(text, "restart") == 0) inputRequestRestart();
   else if (strcmp(text, "pause") == 0)   inputRequestPause();
+  else if (strcmp(text, "mode walls") == 0) inputRequestMode(MODE_WALLS);
+  else if (strcmp(text, "mode wrap") == 0)  inputRequestMode(MODE_WRAP);
   // anything else is ignored
 }
 
