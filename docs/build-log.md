@@ -160,3 +160,32 @@
 - [x] D-pad, swipes and keyboard all steer
 - [x] Pause, auto-pause on disconnect, restart
 - [x] Committed and tagged v0.5
+
+
+## Phase 6: Attract screen, game over, score (v1.0)
+
+**Date:** 2026-09-20
+
+**What I did**
+- Replaced the paused/started/over flags with an explicit state machine (`app_state.h`): Attract → Playing ⇄ Paused → GameOver → Score → Attract. Every change goes through `enterState()`, which logs it and updates the phones. Restart returns to Attract from anywhere.
+- `screens.h/.cpp`:
+  - **Attract:** a demo snake follows a route that visits all 256 squares once and loops (zigzag across columns 1–31, back up column 0), eating apples and growing.
+  - **Game over:** the snake flashes red three times, then crumbles from the tail.
+  - **Score:** a custom 5×6 digit font on rows 1–6, centred, counting up with leading zeros to the final score's length.
+- Animations are drawn purely from elapsed time since the screen started, so they never drift.
+- `display`: added `displayFill()`; disabled FastLED dithering so dim colours don't shimmer.
+- Controller page: game-over message now says any direction plays again.
+
+**Design changes after testing**
+- Attract screen: removed the dim background glow; just the snake and apples on a dark board looks cleaner.
+- Score: moved from a 5×7 font (top-aligned, bottom row unused) to 5×6 with the top and bottom rows empty.
+- Score count-up: zero-padded (00, 01 … 12) so multi-digit scores don't look right-aligned while counting.
+
+**Results**
+- Full loop works: attract → play → crash → score → attract, controlled from the phone.
+
+**Checklist**
+- [x] Attract, game over and score screens look right
+- [x] Pause, auto-pause and restart still work
+- [x] Demo clip recorded in docs/media/
+- [x] Committed and tagged v1.0

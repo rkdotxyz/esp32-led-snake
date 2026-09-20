@@ -29,11 +29,18 @@ const unsigned long TICK_MS = 250;     // time between snake steps. Lower = fast
 const int START_LENGTH = 3;            // segments at the start of a game
 
 
+// ---------- Screens and animation (new in phase 6) ----------
+const unsigned long FRAME_MS = 30;          // animations redraw about 33 times a second
+const unsigned long ATTRACT_STEP_MS = 90;   // attract-screen snake speed
+const unsigned long SCORE_SHOW_MS = 3000;   // how long the final score stays up
+
+
 // ---------- Colours ----------
 const CRGB HEAD_COLOUR = CRGB(120, 255, 120);   // pale green, brighter than the body
 const CRGB BODY_COLOUR = CRGB(0, 160, 40);      // green
 const CRGB FOOD_COLOUR = CRGB(255, 30, 0);      // red-orange
 const CRGB DEAD_COLOUR = CRGB(255, 0, 0);       // head turns red on game over
+const CRGB SCORE_COLOUR = CRGB(255, 170, 0);    // amber digits for the final score
 
 
 // ---------- WiFi hotspot (new in phase 5) ----------

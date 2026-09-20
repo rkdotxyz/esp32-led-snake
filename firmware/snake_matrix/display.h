@@ -15,6 +15,7 @@
 
 void displayBegin();                                // set up FastLED; call once in setup()
 void displayClear();                                // turn every pixel off (in the buffer)
+void displayFill(CRGB colour);                      // set every pixel to one colour
 void displaySetPixel(int x, int y, CRGB colour);    // colour one pixel; off-grid is ignored
 void displayShow();                                 // send the buffer to the matrix
 

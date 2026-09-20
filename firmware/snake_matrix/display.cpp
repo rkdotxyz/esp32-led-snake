@@ -17,12 +17,23 @@ void displayBegin() {
   FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
   FastLED.setMaxPowerInVoltsAndMilliamps(5, MAX_MILLIAMPS);
   FastLED.setBrightness(BRIGHTNESS);
+
+  // Dithering makes very dim colours flicker between two levels to fake
+  // in-between brightness. On the attract screen's faint background that
+  // shows as shimmer, so it's switched off.
+  FastLED.setDither(DISABLE_DITHER);
+
   FastLED.clear(true);
 }
 
 
 void displayClear() {
   FastLED.clear();   // buffer only; nothing changes until displayShow()
+}
+
+
+void displayFill(CRGB colour) {
+  fill_solid(leds, NUM_LEDS, colour);
 }
 
 

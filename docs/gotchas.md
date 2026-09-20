@@ -13,6 +13,9 @@ Carried over from the first Snake build, plus anything new found during this one
 - **WiFi.** The ESP32 only does 2.4 GHz. This build avoids the issue by hosting its own hotspot.
 - **Responsiveness.** Read input separately from the game tick; never use `delay()` in the main loop.
 - **Typed commands ignored.** Sketches that read commands from Serial Monitor wait for Enter. Set the line-ending dropdown next to the baud rate to "New Line".
+- **Very dim colours disappear.** Every colour is scaled by `BRIGHTNESS` (40/255), so values below about 7 round down to fully off.
+- **Dithering shimmers at low brightness.** FastLED flickers dim pixels between two levels to fake in-between shades. Switched off with `FastLED.setDither(DISABLE_DITHER)`.
+- **Custom types in function signatures need a header.** Functions in the `.ino` that take `AppState` only compile because the enum lives in `app_state.h` (see the OLED project's auto-prototype problem).
 
 ## Arduino IDE
 - **Library Manager looks empty** while a board package is installing. Wait for the install to finish, then search again.

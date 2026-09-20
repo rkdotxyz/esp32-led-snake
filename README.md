@@ -2,7 +2,7 @@
 
 Classic Snake on a 32×8 WS2812B LED matrix, driven by an ESP32 and played from your phone's browser over the ESP32's own WiFi hotspot. No router, no app: join the network, open the page, play.
 
-> **Status:** Phase 5 complete (play from any browser over the ESP32's own WiFi hotspot). Next up: attract screen, game-over animation and on-matrix score, for v1.0.
+> **Status:** v1.0 complete. Attract screen, full game, crash animation and score, all played from your phone. Next up: wall and wrap-around modes.
 
 <!-- Add a GIF here once v1.0 works: ![Demo](docs/media/demo.gif) -->
 
@@ -10,7 +10,7 @@ Classic Snake on a 32×8 WS2812B LED matrix, driven by an ESP32 and played from 
 
 | Release | Features | Status |
 |---|---|---|
-| v1.0 | Attract screen, core Snake (move, eat, grow, die), game over + score, phone controller over the ESP32's hotspot | Planned |
+| v1.0 | Attract screen, core Snake (move, eat, grow, die), game over + score, phone controller over the ESP32's hotspot | Done |
 | v1.1 | Wall mode and wrap-around mode, remembered after power-off | Planned |
 | v2.0 | Colour themes, pulsing head, fading tail, eat sparkle | Planned |
 
@@ -20,6 +20,14 @@ Classic Snake on a 32×8 WS2812B LED matrix, driven by an ESP32 and played from 
 - Your **phone** joins that network and opens a controller page served by the ESP32.
 - Button presses travel over a **WebSocket**, so input feels instant.
 - The whole thing runs from a **single USB cable**. The firmware caps LED current so it never draws more than USB can supply.
+
+## How to play
+
+1. Power the ESP32 over USB. The matrix shows the attract screen.
+2. On your phone or laptop, join the WiFi network **ESP32-Snake** (password `playsnake`). It has no internet; that's expected.
+3. Open **http://snake.local** (or **http://192.168.4.1**).
+4. Press any direction to start. Steer with the d-pad, swipes, or arrow keys / W A S D.
+5. **P** or Space pauses; **R** restarts. Locking your phone mid-game pauses automatically.
 
 ## Hardware
 
@@ -78,7 +86,7 @@ docs/                    build log, gotchas, media
 - [x] Phase 3: Map the grid
 - [x] Phase 4: Snake core, played over Serial
 - [x] Phase 5: Browser controller for phone and desktop
-- [ ] Phase 6: Attract screen and game over (v1.0)
+- [x] Phase 6: Attract screen and game over (v1.0)
 - [ ] Phase 7: Wall and wrap modes (v1.1)
 - [ ] Phase 8: Themes and effects (v2.0)
 - [ ] Phase 9: Extras

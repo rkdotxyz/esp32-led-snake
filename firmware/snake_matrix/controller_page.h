@@ -180,7 +180,7 @@ const char CONTROLLER_PAGE[] = R"rawliteral(<!DOCTYPE html>
 
   function showState() {
     statusEl.textContent = state === 'over'
-      ? `Game over: ${reason}. Tap Restart`
+      ? `Game over: ${reason}. Any direction plays again`
       : (statusText[state] || '');
     pauseBtn.textContent = state === 'paused' ? 'Resume' : 'Pause';
   }
