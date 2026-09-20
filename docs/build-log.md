@@ -130,3 +130,33 @@
 - [x] Eating grows the snake and prints the score
 - [x] Wall and self collisions end the game; R restarts
 - [x] Committed and tagged v0.4
+
+
+## Phase 5: Browser controller
+
+**Date:** 2026-09-20
+
+**What I did**
+- The ESP32 now runs its own WiFi hotspot (`ESP32-Snake`) and serves a controller page at `http://snake.local` (fallback `http://192.168.4.1`).
+- `controller/index.html`: d-pad, swipe anywhere (chained swipes in one drag), arrow keys / W A S D on a laptop, Pause and Restart, live score and connection status. Reconnects automatically.
+- `tools/embed_page.py` copies the page into `firmware/snake_matrix/controller_page.h` as a C++ raw string. Run it after every change to the page.
+- `web_control.h/.cpp`: hotspot, mDNS name, web server, and a WebSocket at `/ws` for instant two-way messages (`up`, `restart`, `pause` in; `score`, `state`, `reason` out).
+- `input.cpp`: any source can push commands; the queue is guarded by a lock because the web server runs in a separate task from `loop()`.
+- Game flow: a new game waits for the first direction; the last controller disconnecting mid-game auto-pauses it.
+- `display` and `snake_game` unchanged.
+
+**Results**
+- Playable from iPhone and laptop browsers; score and state update live.
+
+**What broke and how I fixed it**
+- The embed script printed nothing: `embed_page.py` was empty (created but code not pasted/saved). Pasted, saved, re-ran.
+
+**Ideas for later (phase 9)**
+- Sound on the phone for eating, hitting a wall and dying (Web Audio).
+- Haptics on death and wall hits. Safari doesn't support `navigator.vibrate`, so iPhone needs a workaround; to be investigated.
+
+**Checklist**
+- [x] Hotspot, page and WebSocket connect
+- [x] D-pad, swipes and keyboard all steer
+- [x] Pause, auto-pause on disconnect, restart
+- [x] Committed and tagged v0.5

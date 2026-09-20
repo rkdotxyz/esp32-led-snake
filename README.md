@@ -2,7 +2,7 @@
 
 Classic Snake on a 32×8 WS2812B LED matrix, driven by an ESP32 and played from your phone's browser over the ESP32's own WiFi hotspot. No router, no app: join the network, open the page, play.
 
-> **Status:** Phase 4 complete (Snake is playable over USB serial). Next up: a browser controller for phone and desktop.
+> **Status:** Phase 5 complete (play from any browser over the ESP32's own WiFi hotspot). Next up: attract screen, game-over animation and on-matrix score, for v1.0.
 
 <!-- Add a GIF here once v1.0 works: ![Demo](docs/media/demo.gif) -->
 
@@ -56,6 +56,7 @@ In Arduino IDE, choose **Tools > Board > esp32 > DOIT ESP32 DEVKIT V1** and sele
 2. Flash `firmware/tests/t01_blink` to check your board and cable work.
 3. Flash `firmware/tests/t01_libraries` to check the libraries compile together.
 4. Follow the phases in [`docs/build-log.md`](docs/build-log.md) to wire and bring up the matrix.
+5. Run `python3 tools/embed_page.py` from the repo root, then upload `firmware/snake_matrix`. Join the `ESP32-Snake` WiFi network (password `playsnake`) and open `http://snake.local`.
 
 The main game sketch will live in `firmware/snake_matrix/`.
 
@@ -76,7 +77,7 @@ docs/                    build log, gotchas, media
 - [x] Phase 2: Power and first light
 - [x] Phase 3: Map the grid
 - [x] Phase 4: Snake core, played over Serial
-- [ ] Phase 5: Browser controller for phone and desktop
+- [x] Phase 5: Browser controller for phone and desktop
 - [ ] Phase 6: Attract screen and game over (v1.0)
 - [ ] Phase 7: Wall and wrap modes (v1.1)
 - [ ] Phase 8: Themes and effects (v2.0)

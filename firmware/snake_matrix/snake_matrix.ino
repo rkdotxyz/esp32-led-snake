@@ -1,73 +1,96 @@
 // =====================================================================
 // snake_matrix.ino
 // ---------------------------------------------------------------------
-// The main sketch. It doesn't contain the game's rules or any LED
-// details itself; it connects the modules together:
+// The main sketch. It connects the modules together:
 //
-//   input  ->  snake_game  ->  drawGame()  ->  display
+//   Serial keys --+
+//                 +--> input --> snake_game --> drawGame() --> display
+//   web_control --+                   |
+//        ^                            |
+//        +-------- sendStatus() <-----+   (score and state back to phones)
 //
-// Phase 4: playable Snake, steered from the keyboard over USB.
-//   W A S D = up, left, down, right      R = restart
+// Phase 5: play from any browser. Join the "ESP32-Snake" WiFi network,
+// open http://snake.local, and steer with the on-screen pad, swipes or
+// the keyboard. Serial keys (W A S D, R, P) still work too.
 //
-// Serial: 115200 baud.
+// Serial Monitor: 115200 baud.
 // =====================================================================
 
 #include "config.h"
 #include "display.h"
 #include "snake_game.h"
 #include "input.h"
+#include "web_control.h"
 
 unsigned long lastTick = 0;       // when the snake last moved
-bool gameOverAnnounced = false;   // so "Game over" prints only once
+bool paused = true;               // a new game waits for the first direction
+bool started = false;             // has this game had its first move yet?
+bool gameOverAnnounced = false;   // so game over is reported only once
+int lastClientCount = 0;          // to notice controllers joining or leaving
 
 
 void setup() {
   Serial.begin(115200);
   delay(1000);
   Serial.println();
-  Serial.println("snake_matrix: phase 4");
-  Serial.println("Keys: W A S D to steer, R to restart");
+  Serial.println("snake_matrix: phase 5");
 
   displayBegin();
+  webBegin();
   startNewGame();
 }
 
 
 void loop() {
-  // 1. Read keys on every pass, so no keypress is ever missed,
-  //    even between snake steps.
-  inputUpdate();
+  // 1. Housekeeping and inputs, on every pass.
+  inputUpdate();       // Serial keys. Phone commands arrive on their own.
+  webUpdate();
+  watchControllers();
 
   if (inputRestartRequested()) {
     startNewGame();
   }
 
-  // 2. Nothing else to do once the game has ended; wait for R.
+  // 2. Game over: report it once, then wait for a restart.
   if (gameIsOver()) {
     if (!gameOverAnnounced) {
-      // \r\n (carriage return + new line) keeps lines tidy in any terminal
-      // program, not just Serial Monitor. Serial.println() adds it for you.
-      Serial.printf("Game over: %s. Score: %d. Press R to play again.\r\n",
-                    gameOverReason(), gameScore());
       gameOverAnnounced = true;
-      drawGame();                  // redraw so the head shows red
+      Serial.printf("Game over: %s. Score: %d\r\n", gameOverReason(), gameScore());
+      drawGame();                    // redraw so the head shows red
+      sendStatus();
     }
     return;
   }
 
-  // 3. Move the snake once per tick.
+  if (inputPauseRequested()) {
+    setPaused(!paused);              // pause button toggles
+  }
+
+  // 3. Paused (or waiting to start): any direction gets things moving.
+  if (paused) {
+    Direction d;
+    if (inputNextDirection(d)) {
+      gameTurn(d);
+      started = true;
+      setPaused(false);
+      lastTick = millis();
+    }
+    return;
+  }
+
+  // 4. Playing: move the snake once per tick.
   if (millis() - lastTick >= TICK_MS) {
     lastTick = millis();
 
     Direction d;
-    if (inputNextDirection(d)) {   // one queued turn per step
+    if (inputNextDirection(d)) {     // one queued turn per step
       gameTurn(d);
     }
 
     int scoreBefore = gameScore();
     gameStep();
     if (gameScore() != scoreBefore) {
-      Serial.printf("Score: %d\r\n", gameScore());
+      sendStatus();                  // phones update their score
     }
 
     drawGame();
@@ -78,10 +101,68 @@ void loop() {
 void startNewGame() {
   inputClear();
   gameReset();
+  paused = true;
+  started = false;
   gameOverAnnounced = false;
-  lastTick = millis();
   drawGame();
-  Serial.println("New game. Go!");
+  sendStatus();
+  Serial.println("New game. Press a direction to start.");
+}
+
+
+void setPaused(bool p) {
+  paused = p;
+  Serial.println(paused ? "Paused" : "Playing");
+  sendStatus();
+}
+
+
+// Notices controllers connecting or disconnecting. If the last one
+// disconnects mid-game (phone locked, walked away), the game pauses
+// instead of letting the snake crash on its own.
+void watchControllers() {
+  int count = webClientCount();
+  if (count == lastClientCount) {
+    return;
+  }
+
+  if (count > lastClientCount) {
+    Serial.printf("Controller connected (%d connected)\r\n", count);
+    sendStatus();                    // the new controller needs the current score and state
+  } else {
+    Serial.printf("Controller disconnected (%d connected)\r\n", count);
+    if (count == 0 && started && !paused && !gameIsOver()) {
+      setPaused(true);
+    }
+  }
+  lastClientCount = count;
+}
+
+
+// The game state as one word, for the controllers.
+const char* stateName() {
+  if (gameIsOver()) return "over";
+  if (!started)     return "ready";
+  if (paused)       return "paused";
+  return "playing";
+}
+
+
+// Tells every controller the current score and state.
+void sendStatus() {
+  char message[64];   // room for the longest message we send
+
+  // snprintf writes formatted text into `message`, never past its size.
+  snprintf(message, sizeof(message), "score %d", gameScore());
+  webSend(message);
+
+  if (gameIsOver()) {
+    snprintf(message, sizeof(message), "reason %s", gameOverReason());
+    webSend(message);                // sent before "state over", so the page has it ready
+  }
+
+  snprintf(message, sizeof(message), "state %s", stateName());
+  webSend(message);
 }
 
 

@@ -34,3 +34,12 @@ const CRGB HEAD_COLOUR = CRGB(120, 255, 120);   // pale green, brighter than the
 const CRGB BODY_COLOUR = CRGB(0, 160, 40);      // green
 const CRGB FOOD_COLOUR = CRGB(255, 30, 0);      // red-orange
 const CRGB DEAD_COLOUR = CRGB(255, 0, 0);       // head turns red on game over
+
+
+// ---------- WiFi hotspot (new in phase 5) ----------
+// The ESP32 creates its own WiFi network. Join it from your phone or
+// laptop, then open http://snake.local (or http://192.168.4.1).
+// `const char* const` = a piece of text that can never be changed.
+const char* const AP_SSID = "ESP32-Snake";     // the network name you'll see
+const char* const AP_PASSWORD = "playsnake";   // must be at least 8 characters
+const char* const HOSTNAME = "snake";          // gives the address snake.local

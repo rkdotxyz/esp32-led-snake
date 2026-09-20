@@ -22,3 +22,11 @@ Carried over from the first Snake build, plus anything new found during this one
 - **Only one program can use the USB port.** Close Arduino IDE's Serial Monitor before using a terminal tool, and quit the terminal tool before uploading.
 - **Terminal tools can hold the ESP32 in reset.** Opening the port may toggle the DTR/RTS lines wired to the ESP32's reset and boot pins. The terminal looks connected but the sketch isn't running. Arduino's Serial Monitor handles this correctly; `screen` and `tio` may not.
 - **VS Code shows false errors on Arduino code.** It doesn't know where the Arduino libraries live. Trust Arduino IDE's compile result instead.
+
+## WiFi and the controller
+- **"No Internet Connection" on iPhone is normal.** The ESP32's hotspot has no internet. Stay connected.
+- **A Mac on the hotspot loses internet.** It joins one WiFi network at a time. Switch back when done; Serial Monitor still works over USB.
+- **Type `http://`.** Some browsers try `https://` first, which the ESP32 doesn't serve. If `snake.local` fails, use `http://192.168.4.1`.
+- **Re-run the embed script after editing the page.** `python3 tools/embed_page.py` from the repo root, then re-upload. Editing `controller_page.h` by hand gets overwritten.
+- **Don't name a file `network.h`.** The ESP32 core has its own `Network.h`, and macOS treats the two names as the same file.
+- **Save before running.** VS Code's unsaved dot on a tab means the file on disk is still empty or old.

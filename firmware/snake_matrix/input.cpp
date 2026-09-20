@@ -1,10 +1,17 @@
 // =====================================================================
 // input.cpp
 // ---------------------------------------------------------------------
-// Why a queue? The snake only moves once per tick (every 250 ms). If you
-// press "up" then "left" quickly within one tick, a single "latest key"
-// variable would lose the "up". A queue keeps both, and the game uses
-// one per tick, in order. That's what makes quick turns feel reliable.
+// Why a queue? The snake only moves once per tick. If you press "up"
+// then "left" quickly within one tick, a single "latest key" variable
+// would lose the "up". A queue keeps both, used one per tick, in order.
+//
+// New in phase 5: two tasks share this queue.
+// The web server runs in its own background task (the ESP32 runs
+// several tasks at once, even on two processor cores). So a phone can
+// add a direction at the exact moment loop() is taking one out. If both
+// touched the queue at once, it could be corrupted. A "critical
+// section" (portENTER_CRITICAL ... portEXIT_CRITICAL) lets only one
+// task inside at a time. Keep what's inside very short.
 // =====================================================================
 
 #include "input.h"
@@ -14,66 +21,98 @@ const int QUEUE_SIZE = 3;                  // enough for fast double turns
 static Direction queue[QUEUE_SIZE];
 static int queueCount = 0;
 static bool restartRequested = false;
+static bool pauseRequested = false;
+
+// The lock that guards everything above.
+static portMUX_TYPE inputLock = portMUX_INITIALIZER_UNLOCKED;
 
 
-// Adds a direction to the end of the queue.
-static void pushDirection(Direction d) {
-  // Pressing the same key twice in a row adds nothing new.
-  if (queueCount > 0 && queue[queueCount - 1] == d) {
-    return;
-  }
-  // If the queue is full, the key is dropped. Three pending turns is
+// ---------- Used by input sources ----------
+
+void inputPushDirection(Direction d) {
+  portENTER_CRITICAL(&inputLock);
+  // Pressing the same direction twice in a row adds nothing new.
+  bool repeat = (queueCount > 0 && queue[queueCount - 1] == d);
+  // If the queue is full the press is dropped: three pending turns is
   // already more than anyone can use in one tick.
-  if (queueCount < QUEUE_SIZE) {
+  if (!repeat && queueCount < QUEUE_SIZE) {
     queue[queueCount] = d;
     queueCount++;
   }
+  portEXIT_CRITICAL(&inputLock);
 }
 
 
+void inputRequestRestart() {
+  portENTER_CRITICAL(&inputLock);
+  restartRequested = true;
+  portEXIT_CRITICAL(&inputLock);
+}
+
+
+void inputRequestPause() {
+  portENTER_CRITICAL(&inputLock);
+  pauseRequested = true;
+  portEXIT_CRITICAL(&inputLock);
+}
+
+
+// ---------- Used by the main loop ----------
+
 void inputUpdate() {
-  // Read every character that has arrived. Serial.available() says how
-  // many are waiting, so this never pauses the program.
+  // Serial keys still work, handy for testing without the phone.
   while (Serial.available() > 0) {
     char c = Serial.read();
-    switch (tolower(c)) {             // accept W or w
-      case 'w': pushDirection(DIR_UP);    break;
-      case 's': pushDirection(DIR_DOWN);  break;
-      case 'a': pushDirection(DIR_LEFT);  break;
-      case 'd': pushDirection(DIR_RIGHT); break;
-      case 'r': restartRequested = true;  break;
-      default:  break;                // ignore Enter and anything else
+    switch (tolower(c)) {
+      case 'w': inputPushDirection(DIR_UP);    break;
+      case 's': inputPushDirection(DIR_DOWN);  break;
+      case 'a': inputPushDirection(DIR_LEFT);  break;
+      case 'd': inputPushDirection(DIR_RIGHT); break;
+      case 'r': inputRequestRestart();         break;
+      case 'p': inputRequestPause();           break;
+      default:  break;                         // ignore Enter and anything else
     }
   }
 }
 
 
 bool inputNextDirection(Direction &d) {
-  // The & in "Direction &d" means we fill in the caller's variable
-  // directly, so this function can hand back a direction AND say
-  // (true/false) whether there was one.
-  if (queueCount == 0) {
-    return false;
+  bool found = false;
+  portENTER_CRITICAL(&inputLock);
+  if (queueCount > 0) {
+    d = queue[0];
+    for (int i = 1; i < queueCount; i++) {    // shift the rest forward
+      queue[i - 1] = queue[i];
+    }
+    queueCount--;
+    found = true;
   }
-  d = queue[0];
-  // Shift the rest forward by one.
-  for (int i = 1; i < queueCount; i++) {
-    queue[i - 1] = queue[i];
-  }
-  queueCount--;
-  return true;
+  portEXIT_CRITICAL(&inputLock);
+  return found;
 }
 
 
 bool inputRestartRequested() {
-  if (restartRequested) {
-    restartRequested = false;         // report it only once
-    return true;
-  }
-  return false;
+  portENTER_CRITICAL(&inputLock);
+  bool requested = restartRequested;
+  restartRequested = false;                   // report it only once
+  portEXIT_CRITICAL(&inputLock);
+  return requested;
+}
+
+
+bool inputPauseRequested() {
+  portENTER_CRITICAL(&inputLock);
+  bool requested = pauseRequested;
+  pauseRequested = false;
+  portEXIT_CRITICAL(&inputLock);
+  return requested;
 }
 
 
 void inputClear() {
+  portENTER_CRITICAL(&inputLock);
   queueCount = 0;
+  pauseRequested = false;
+  portEXIT_CRITICAL(&inputLock);
 }
