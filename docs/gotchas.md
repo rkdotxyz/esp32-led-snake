@@ -12,6 +12,7 @@ Carried over from the first Snake build, plus anything new found during this one
 - **Web server libraries.** The standard WebServer/WebSocketsServer clashed with esp32 board package 3.x. AsyncTCP + ESPAsyncWebServer fixed it. Install both from the same maintainer (ESP32Async); mixing sources causes compile errors.
 - **WiFi.** The ESP32 only does 2.4 GHz. This build avoids the issue by hosting its own hotspot.
 - **Responsiveness.** Read input separately from the game tick; never use `delay()` in the main loop.
+- **Typed commands ignored.** Sketches that read commands from Serial Monitor wait for Enter. Set the line-ending dropdown next to the baud rate to "New Line".
 
 ## Arduino IDE
 - **Library Manager looks empty** while a board package is installing. Wait for the install to finish, then search again.

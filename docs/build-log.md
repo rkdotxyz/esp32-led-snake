@@ -69,3 +69,33 @@
 - [x] Resistor and capacitor back in circuit, t02 re-tested
 - [ ] Wiring photo saved in hardware/photos/
 - [x] Committed and tagged v0.2
+
+
+## Phase 3: Map the grid
+
+**Date:** 2026-09-20
+
+**What I did**
+- Wrote `t03_xy_mapping` with an `XY(x, y)` function that turns a grid position into the LED's number on the strip, and a `setPixel(x, y, colour)` helper that ignores positions off the grid.
+- Added typed commands in Serial Monitor: `x y` lights a single pixel and prints its LED number; `demo` restarts the test patterns.
+- No wiring changes.
+
+**The mapping**
+- x = column, 0 (left) to 31 (right); y = row, 0 (top) to 7 (bottom). Matrix held with the plug on the left.
+- Column x starts at LED `x * 8`.
+- Even columns run top to bottom: `x * 8 + y`.
+- Odd columns run bottom to top: `x * 8 + (7 - y)`.
+- Off-grid positions return -1, so nothing is drawn.
+
+**Results**
+- Corners: red top left, green top right, blue bottom left, yellow bottom right.
+- Border, diagonals, column sweep and row sweep all drew correctly.
+- Hand-typed positions matched predictions: `0 0` → 0, `1 0` → 15, `5 3` → 44, `31 0` → 255, `31 7` → 248, `32 0` → off the grid.
+
+**What broke and how I fixed it**
+- Nothing this phase.
+
+**Checklist**
+- [x] All five test patterns correct
+- [x] Hand-typed positions match predictions
+- [x] Committed and tagged v0.3

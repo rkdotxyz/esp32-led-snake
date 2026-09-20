@@ -2,7 +2,7 @@
 
 Classic Snake on a 32×8 WS2812B LED matrix, driven by an ESP32 and played from your phone's browser over the ESP32's own WiFi hotspot. No router, no app: join the network, open the page, play.
 
-> **Status:** Phase 2 complete (matrix wired, first light, power cap tested). Next up: mapping (x, y) to the right LED.
+> **Status:** Phase 3 complete (grid mapping works: the code can address any pixel by column and row). Next up: the Snake game itself, steered from Serial Monitor.
 
 <!-- Add a GIF here once v1.0 works: ![Demo](docs/media/demo.gif) -->
 
@@ -74,7 +74,7 @@ docs/                    build log, gotchas, media
 
 - [x] Phase 1: Tools, libraries and repo
 - [x] Phase 2: Power and first light
-- [ ] Phase 3: Map the grid
+- [x] Phase 3: Map the grid
 - [ ] Phase 4: Snake core, played over Serial
 - [ ] Phase 5: Attract screen and game over
 - [ ] Phase 6: Phone controller (v1.0)
