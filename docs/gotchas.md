@@ -17,3 +17,8 @@ Carried over from the first Snake build, plus anything new found during this one
 ## Arduino IDE
 - **Library Manager looks empty** while a board package is installing. Wait for the install to finish, then search again.
 - **Wrong board selected.** The IDE remembers the last board (e.g. an Arduino UNO from another project). Check the board dropdown and port before every first upload in a session.
+
+## Serial and terminals
+- **Only one program can use the USB port.** Close Arduino IDE's Serial Monitor before using a terminal tool, and quit the terminal tool before uploading.
+- **Terminal tools can hold the ESP32 in reset.** Opening the port may toggle the DTR/RTS lines wired to the ESP32's reset and boot pins. The terminal looks connected but the sketch isn't running. Arduino's Serial Monitor handles this correctly; `screen` and `tio` may not.
+- **VS Code shows false errors on Arduino code.** It doesn't know where the Arduino libraries live. Trust Arduino IDE's compile result instead.

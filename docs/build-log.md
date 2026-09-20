@@ -99,3 +99,34 @@
 - [x] All five test patterns correct
 - [x] Hand-typed positions match predictions
 - [x] Committed and tagged v0.3
+
+
+## Phase 4: Snake core, played over Serial
+
+**Date:** 2026-09-20
+
+**What I did**
+- Started the main sketch in `firmware/snake_matrix/`, split into modules:
+  - `config.h`: pin, matrix size, power cap, game speed, colours
+  - `display.h/.cpp`: FastLED setup, `XY()` mapping and pixel drawing (the only code that touches LEDs)
+  - `snake_game.h/.cpp`: the rules only (move, eat, grow, walls, self-collision, food placement); no LED or Serial code
+  - `input.h/.cpp`: W A S D and R from Serial, fed through a small direction queue so quick double turns aren't lost
+  - `snake_matrix.ino`: ties it together; reads input every loop, steps the game every `TICK_MS` (250 ms), redraws
+- Custom types (`Direction`, `Point`) live in `.h` files, which avoids Arduino IDE's auto-prototype problem.
+
+**Results**
+- Playable from Serial Monitor: type a letter, then Enter (several letters at once queue several turns).
+- Snake moves, turns, eats, grows by one per food, and dies on walls or on itself; R restarts.
+
+**What broke and how I fixed it**
+- Real-time play from a terminal didn't work. `screen` exited immediately ("screen is terminating"). `tio` connected but didn't respond to keys, most likely because opening the port toggles the ESP32's DTR/RTS reset lines. Parked rather than debugged: the browser controller replaces keyboard play anyway.
+- VS Code shows false errors on the sketch because it doesn't know where the Arduino libraries are. Arduino IDE compiles it cleanly, which is what counts.
+
+**Decision**
+- Swapped phases: the browser/phone controller comes next (phase 5), the attract screen and game-over animation after it (phase 6).
+
+**Checklist**
+- [x] Moves and turns with W A S D; reversing is ignored
+- [x] Eating grows the snake and prints the score
+- [x] Wall and self collisions end the game; R restarts
+- [x] Committed and tagged v0.4
