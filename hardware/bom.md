@@ -4,7 +4,7 @@
 |---|---|---|
 | ESP32 DevKit V1 (30-pin) | 1 | |
 | WS2812B 8×32 flexible LED matrix | 1 | 256 LEDs, serpentine wiring |
-| Electrolytic capacitor, 1000 µF, 10 V or higher | 1 | Across 5 V and GND at the matrix input; stripe side to GND |
+| Electrolytic capacitor, 100 µF, 25 V | 1 | Across 5 V and GND at the matrix input; stripe side to GND. 1000 µF recommended if moving to an external supply |
 | Resistor, 330–470 Ω | 1 | In series on the data line |
 | Micro-USB **data** cable | 1 | Charge-only cables won't be detected |
 | Breadboard + jumper wires | – | |

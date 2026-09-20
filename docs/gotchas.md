@@ -6,6 +6,7 @@ Carried over from the first Snake build, plus anything new found during this one
 - **Data pin.** GPIO2 drove the LEDs where GPIO13 didn't. GPIO2 is also a boot pin tied to the onboard LED: if uploads fail with the matrix connected, unplug the data wire during upload or move to GPIO16.
 - **Serpentine wiring.** The matrix is wired in a zigzag, so (x, y) needs a mapping function to find the LED's index on the strip.
 - **Brownouts.** On USB power, too many bright LEDs make the ESP32 reset with `Brownout detector was triggered` in Serial Monitor. That's power, not code.
+- **Split breadboard rails.** Many long breadboards split each power rail into two halves around column 30. Check for a break in the red and blue lines. If power goes into one half and the matrix connects to the other, the code runs but nothing lights.
 
 ## Software
 - **Web server libraries.** The standard WebServer/WebSocketsServer clashed with esp32 board package 3.x. AsyncTCP + ESPAsyncWebServer fixed it. Install both from the same maintainer (ESP32Async); mixing sources causes compile errors.

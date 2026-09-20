@@ -30,4 +30,42 @@
 **Result**
 - [x] t01_blink uploads and runs
 - [x] t01_libraries compiles and uploads
-- [ ] Repo pushed to GitHub, tagged v0.1
+- [x] Repo pushed to GitHub, tagged v0.1
+
+
+## Phase 2: Power and first light
+
+**Date:** 2026-09-20
+
+**Parts used**
+- 330 Ω resistor (orange, orange, brown, gold) in series on the data line
+- 100 µF 25 V electrolytic capacitor across 5 V and GND (1000 µF was planned; 100 µF is enough on USB power)
+- Breadboard and jumper wires; the ESP32 sits off the breadboard with jumpers straight to its pins
+
+**Wiring (USB only)**
+- ESP32 VIN → matrix 5V (red)
+- ESP32 GND → matrix GND (white)
+- ESP32 D2 → 330 Ω → matrix DIN (green)
+- Capacitor across + and − rails, stripe on −
+
+**What I did**
+- Wrote and ran `t02_first_pixels`: colour test on LED 0, then a single dot chasing through all 256 LEDs.
+- Wrote and ran `t04_power_cap`: whole panel white, stepping requested brightness from 5 to 255.
+
+**Results**
+- Colour order: LED 0 showed red, green, blue in order, so `GRB` is correct.
+- Wiring pattern: LED 0 is top left. The chain runs column by column: down column 0, up column 1, down column 2, and so on (8 LEDs per column).
+- Power cap: with every LED white, the 300 mA cap limits brightness to 6/255 (FastLED estimates ~299 mA). Even at 5/255 the estimate is ~257 mA, because FastLED counts a baseline for every powered LED plus the ESP32.
+- No brownout resets during the power test.
+
+**What broke and how I fixed it**
+- Serial Monitor showed the chase running, but no LEDs lit. The breadboard's power rails are split in the middle (around column 30): VIN/GND went into one half and the matrix power into the other, so the matrix had no power. Fixed by moving the matrix's red and white wires into the same rail section as VIN and GND.
+- Garbled characters in Serial Monitor right after upload: the ESP32's boot messages run at 74880 baud. Normal; ignore.
+- A burst of repeated lines with identical timestamps: Serial Monitor delivering lines buffered while it reconnected. Harmless.
+
+**Checklist**
+- [x] t02_first_pixels: colour test and chase work
+- [x] t04_power_cap: cap holds, no brownout
+- [x] Resistor and capacitor back in circuit, t02 re-tested
+- [ ] Wiring photo saved in hardware/photos/
+- [x] Committed and tagged v0.2

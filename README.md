@@ -2,7 +2,7 @@
 
 Classic Snake on a 32×8 WS2812B LED matrix, driven by an ESP32 and played from your phone's browser over the ESP32's own WiFi hotspot. No router, no app: join the network, open the page, play.
 
-> **Status:** Phase 1 complete (tools, libraries and board verified). Next up: wiring the matrix and lighting the first pixels.
+> **Status:** Phase 2 complete (matrix wired, first light, power cap tested). Next up: mapping (x, y) to the right LED.
 
 <!-- Add a GIF here once v1.0 works: ![Demo](docs/media/demo.gif) -->
 
@@ -27,7 +27,7 @@ Classic Snake on a 32×8 WS2812B LED matrix, driven by an ESP32 and played from 
 |---|---|
 | ESP32 DevKit V1 (ESP32-D0WD-V3) | USB-serial port shows up as `/dev/cu.usbserial-0001` on macOS |
 | WS2812B 8×32 flexible LED matrix | 256 LEDs, serpentine wiring |
-| 1000 µF capacitor, 330–470 Ω resistor | Power smoothing and data-line protection |
+| 100 µF 25 V capacitor, 330 Ω resistor | Power smoothing and data-line protection |
 | Micro-USB data cable | Powers everything |
 
 Full parts list: [`hardware/bom.md`](hardware/bom.md). Wiring diagram: coming in phase 2.
@@ -73,7 +73,7 @@ docs/                    build log, gotchas, media
 ## Roadmap
 
 - [x] Phase 1: Tools, libraries and repo
-- [ ] Phase 2: Power and first light
+- [x] Phase 2: Power and first light
 - [ ] Phase 3: Map the grid
 - [ ] Phase 4: Snake core, played over Serial
 - [ ] Phase 5: Attract screen and game over
