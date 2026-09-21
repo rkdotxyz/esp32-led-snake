@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 420" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title>ESP32 LED Snake wiring (USB power only)</title>
+  <desc>ESP32 VIN to the breadboard plus rail and GND to the minus rail. A 100 microfarad capacitor across the rails, stripe on minus. The rails feed the matrix 5V (red) and GND (white). ESP32 D2 goes through a 330 ohm resistor to the matrix DIN (green).</desc>
+  <defs>
+    <marker id="dot" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6"><circle cx="5" cy="5" r="4" fill="#333"/></marker>
+  </defs>
+
+  <!-- background so it reads in GitHub dark mode too -->
+  <rect x="0" y="0" width="820" height="420" rx="16" fill="#ffffff"/>
+
+  <!-- ESP32 -->
+  <rect x="30" y="60" width="190" height="290" rx="10" fill="#1b1f24"/>
+  <text x="125" y="95" text-anchor="middle" font-size="18" font-weight="700" fill="#ffffff">ESP32 DevKit V1</text>
+  <text x="125" y="118" text-anchor="middle" font-size="13" fill="#b8c0c8">USB to computer or charger</text>
+  <text x="208" y="159" text-anchor="end" font-size="15" font-family="Menlo, Consolas, monospace" fill="#ffffff">VIN</text>
+  <text x="208" y="219" text-anchor="end" font-size="15" font-family="Menlo, Consolas, monospace" fill="#ffffff">GND</text>
+  <text x="208" y="319" text-anchor="end" font-size="15" font-family="Menlo, Consolas, monospace" fill="#ffffff">D2</text>
+  <text x="125" y="378" text-anchor="middle" font-size="12" fill="#6a737d">VIN and GND sit next to the USB port;</text>
+  <text x="125" y="394" text-anchor="middle" font-size="12" fill="#6a737d">D2 is on the other side</text>
+
+  <!-- Breadboard area -->
+  <rect x="270" y="40" width="330" height="330" rx="10" fill="#f6f8fa" stroke="#d0d7de"/>
+  <text x="285" y="62" font-size="13" fill="#6a737d">breadboard</text>
+  <line x1="290" y1="115" x2="580" y2="115" stroke="#d73a49" stroke-width="2" stroke-dasharray="3 5"/>
+  <line x1="290" y1="195" x2="580" y2="195" stroke="#0366d6" stroke-width="2" stroke-dasharray="3 5"/>
+  <text x="586" y="119" font-size="14" fill="#d73a49">+</text>
+  <text x="586" y="199" font-size="14" fill="#0366d6">−</text>
+  <text x="435" y="235" text-anchor="middle" font-size="12" fill="#6a737d">Both power wires in the same rail section:</text>
+  <text x="435" y="251" text-anchor="middle" font-size="12" fill="#6a737d">long rails are often split in the middle</text>
+
+  <!-- power wires ESP32 -> rails -->
+  <path d="M220 155 H250 V115 H310" fill="none" stroke="#d73a49" stroke-width="4"/>
+  <path d="M220 215 H250 V195 H310" fill="none" stroke="#6a737d" stroke-width="4"/>
+  <circle cx="310" cy="115" r="5" fill="#d73a49"/>
+  <circle cx="310" cy="195" r="5" fill="#6a737d"/>
+
+  <!-- capacitor -->
+  <line x1="420" y1="115" x2="420" y2="132" stroke="#8b949e" stroke-width="3"/>
+  <rect x="404" y="132" width="32" height="48" rx="6" fill="#1f3a68"/>
+  <rect x="404" y="160" width="32" height="20" fill="#b9c6da"/>
+  <line x1="420" y1="180" x2="420" y2="195" stroke="#8b949e" stroke-width="3"/>
+  <circle cx="420" cy="115" r="5" fill="#d73a49"/>
+  <circle cx="420" cy="195" r="5" fill="#6a737d"/>
+  <text x="446" y="150" font-size="13" fill="#24292f">100 µF (25 V)</text>
+  <text x="446" y="167" font-size="12" fill="#6a737d">stripe side on −</text>
+
+  <!-- data path with resistor -->
+  <path d="M220 315 H360" fill="none" stroke="#22863a" stroke-width="4"/>
+  <circle cx="360" cy="315" r="5" fill="#22863a"/>
+  <line x1="360" y1="315" x2="392" y2="315" stroke="#8b949e" stroke-width="3"/>
+  <rect x="392" y="304" width="66" height="22" rx="10" fill="#e3cfa3"/>
+  <rect x="405" y="304" width="6" height="22" fill="#e8811a"/>
+  <rect x="417" y="304" width="6" height="22" fill="#e8811a"/>
+  <rect x="429" y="304" width="6" height="22" fill="#7a4a1e"/>
+  <rect x="445" y="304" width="6" height="22" fill="#c9a227"/>
+  <line x1="458" y1="315" x2="500" y2="315" stroke="#8b949e" stroke-width="3"/>
+  <circle cx="500" cy="315" r="5" fill="#22863a"/>
+  <text x="425" y="350" text-anchor="middle" font-size="13" fill="#24292f">330 Ω (either way round)</text>
+
+  <!-- rails -> matrix -->
+  <path d="M540 115 H650" fill="none" stroke="#d73a49" stroke-width="4"/>
+  <path d="M540 195 H650" fill="none" stroke="#6a737d" stroke-width="4"/>
+  <path d="M500 315 H650" fill="none" stroke="#22863a" stroke-width="4"/>
+  <circle cx="540" cy="115" r="5" fill="#d73a49"/>
+  <circle cx="540" cy="195" r="5" fill="#6a737d"/>
+
+  <!-- Matrix -->
+  <rect x="650" y="60" width="145" height="290" rx="10" fill="#1b1f24"/>
+  <text x="722" y="92" text-anchor="middle" font-size="18" font-weight="700" fill="#ffffff">Matrix</text>
+  <text x="722" y="112" text-anchor="middle" font-size="12" fill="#b8c0c8">8×32 WS2812B</text>
+  <text x="722" y="128" text-anchor="middle" font-size="12" fill="#b8c0c8">input end (DIN)</text>
+  <text x="665" y="160" font-size="15" font-family="Menlo, Consolas, monospace" fill="#ffffff">5V</text>
+  <text x="665" y="178" font-size="12" fill="#ff7b72">red</text>
+  <text x="665" y="222" font-size="15" font-family="Menlo, Consolas, monospace" fill="#ffffff">GND</text>
+  <text x="665" y="240" font-size="12" fill="#b8c0c8">white</text>
+  <text x="665" y="305" font-size="15" font-family="Menlo, Consolas, monospace" fill="#ffffff">DIN</text>
+  <text x="665" y="323" font-size="12" fill="#7ee787">green</text>
+  <text x="722" y="378" text-anchor="middle" font-size="12" fill="#6a737d">Tape off the loose extra</text>
+  <text x="722" y="394" text-anchor="middle" font-size="12" fill="#6a737d">red/white power pair</text>
+</svg>
