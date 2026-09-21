@@ -3,8 +3,8 @@
 // ---------------------------------------------------------------------
 // The rules of Snake, and nothing else. This module never touches LEDs,
 // WiFi or Serial: it only knows about a grid, a snake, some food and a
-// direction. That separation means the same game can later be drawn
-// with effects and steered from a phone without changing these rules.
+// direction. That separation is why effects, themes and the phone
+// controller could all be added without changing these rules.
 // =====================================================================
 
 #pragma once
@@ -22,7 +22,7 @@ enum Direction {
 };
 
 
-// What happens at the edges of the board (new in phase 7).
+// What happens at the edges of the board.
 enum WallMode {
   MODE_WALLS,   // the edges are walls: touching one ends the game
   MODE_WRAP     // leave one edge, come back in at the opposite one

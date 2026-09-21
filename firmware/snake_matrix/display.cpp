@@ -2,7 +2,7 @@
 // display.cpp
 // ---------------------------------------------------------------------
 // How the display functions promised in display.h actually work.
-// XY() and setPixel() are the same ones you tested in phase 3.
+// XY() is the mapping worked out with firmware/tests/t03_xy_mapping.
 // =====================================================================
 
 #include "display.h"
@@ -19,8 +19,8 @@ void displayBegin() {
   FastLED.setBrightness(BRIGHTNESS);
 
   // Dithering makes very dim colours flicker between two levels to fake
-  // in-between brightness. On the attract screen's faint background that
-  // shows as shimmer, so it's switched off.
+  // in-between brightness. On the snake's faded tail that shows as
+  // shimmer, so it's switched off.
   FastLED.setDither(DISABLE_DITHER);
 
   FastLED.clear(true);
@@ -29,11 +29,6 @@ void displayBegin() {
 
 void displayClear() {
   FastLED.clear();   // buffer only; nothing changes until displayShow()
-}
-
-
-void displayFill(CRGB colour) {
-  fill_solid(leds, NUM_LEDS, colour);
 }
 
 
@@ -50,7 +45,8 @@ void displayShow() {
 }
 
 
-// Column-by-column zigzag, LED 0 top left (from phase 2 and 3).
+// Column-by-column zigzag, LED 0 top left, as found with
+// firmware/tests/t02_first_pixels.
 int XY(int x, int y) {
   if (x < 0 || x >= MATRIX_WIDTH || y < 0 || y >= MATRIX_HEIGHT) {
     return -1;                                         // off the grid

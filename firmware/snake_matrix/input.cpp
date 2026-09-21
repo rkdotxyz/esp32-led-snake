@@ -5,7 +5,7 @@
 // then "left" quickly within one tick, a single "latest key" variable
 // would lose the "up". A queue keeps both, used one per tick, in order.
 //
-// New in phase 5: two tasks share this queue.
+// Two tasks share this queue.
 // The web server runs in its own background task (the ESP32 runs
 // several tasks at once, even on two processor cores). So a phone can
 // add a direction at the exact moment loop() is taking one out. If both

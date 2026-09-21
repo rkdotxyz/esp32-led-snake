@@ -1,17 +1,26 @@
 // =====================================================================
 // snake_matrix.ino
 // ---------------------------------------------------------------------
-// The main sketch: a state machine (see app_state.h) that decides which
-// screen is showing and connects the modules:
+// Snake on a 32 x 8 WS2812B matrix, played from any browser over the
+// ESP32's own WiFi hotspot.
 //
-//   Serial keys --+
-//                 +--> input --> snake_game --> drawGame() --> display
-//   web_control --+                                  screens --^
+// This file is the conductor. It runs a state machine (app_state.h) and
+// connects the modules, each of which has one job:
 //
-// Phase 9: the snake speeds up as it eats, and the ESP32 sends game
-// events (start, eat, crash) so the phone can play sounds and vibrate.
+//   input        every command, from Serial or the phone, in one queue
+//   web_control  WiFi hotspot, controller page, WebSocket to phones
+//   snake_game   the rules only: move, eat, grow, walls or wrap, die
+//   theme        colours and effects: head pulse, tail fade, sparkle
+//   screens      attract animation, crash animation, final score
+//   display      (x, y) to LED, and the only code that touches FastLED
+//   settings     edges and colours, saved in flash
 //
-// Serial Monitor: 115200 baud. Serial keys W A S D, R, P still work.
+// Two clocks run while playing: the snake moves every currentTickMs()
+// (250 ms, speeding up as it eats), and the picture is redrawn every
+// FRAME_MS (30 ms) so effects stay smooth.
+//
+// Serial Monitor: 115200 baud. Serial keys W A S D, R, P still work,
+// handy for testing without a phone.
 // =====================================================================
 
 #include "config.h"
@@ -35,7 +44,7 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
   Serial.println();
-  Serial.println("snake_matrix: phase 9");
+  Serial.println("snake_matrix");
 
   // Restore the saved settings.
   settingsBegin();
