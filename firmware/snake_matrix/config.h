@@ -25,7 +25,12 @@ const uint32_t MAX_MILLIAMPS = 300;    // FastLED power cap (phase 2)
 
 
 // ---------- Game ----------
-const unsigned long TICK_MS = 250;     // time between snake steps. Lower = faster
+// The snake speeds up as it eats (new in phase 9): each food takes
+// SPEEDUP_PER_FOOD_MS off the time between steps, until MIN_TICK_MS.
+// With these numbers it reaches top speed after 26 foods.
+const unsigned long START_TICK_MS = 250;      // time between steps at the start
+const unsigned long MIN_TICK_MS = 120;        // fastest it ever gets
+const unsigned long SPEEDUP_PER_FOOD_MS = 5;  // how much faster per food
 const int START_LENGTH = 3;            // segments at the start of a game
 
 

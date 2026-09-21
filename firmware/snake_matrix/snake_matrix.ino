@@ -8,10 +8,8 @@
 //                 +--> input --> snake_game --> drawGame() --> display
 //   web_control --+                                  screens --^
 //
-// Phase 8: snake and food colours chosen in Settings, plus effects: a
-// pulsing head, a fading tail, pulsing food and an eat sparkle. The game
-// now redraws on its own fast clock (FRAME_MS), separate from the
-// snake's movement clock (TICK_MS), so effects stay smooth.
+// Phase 9: the snake speeds up as it eats, and the ESP32 sends game
+// events (start, eat, crash) so the phone can play sounds and vibrate.
 //
 // Serial Monitor: 115200 baud. Serial keys W A S D, R, P still work.
 // =====================================================================
@@ -37,7 +35,7 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
   Serial.println();
-  Serial.println("snake_matrix: phase 8");
+  Serial.println("snake_matrix: phase 9");
 
   // Restore the saved settings.
   settingsBegin();
@@ -99,16 +97,16 @@ void updateAttract(unsigned long now) {
 
 
 // Two clocks run here, independently:
-//   TICK_MS  (250 ms): the snake moves one square.
-//   FRAME_MS (30 ms):  the picture is redrawn, so effects animate smoothly
-//                      even while the snake is standing still between steps.
+//   currentTickMs() (250 ms, getting shorter): the snake moves one square.
+//   FRAME_MS (30 ms): the picture is redrawn, so effects animate smoothly
+//                     even while the snake is standing still between steps.
 void updatePlaying(unsigned long now, bool pausePressed) {
   if (pausePressed) {
     enterState(STATE_PAUSED);
     return;
   }
 
-  if (now - lastTick >= TICK_MS) {
+  if (now - lastTick >= currentTickMs()) {
     lastTick = now;
 
     Direction d;
@@ -126,7 +124,9 @@ void updatePlaying(unsigned long now, bool pausePressed) {
     if (gameScore() != scoreBefore) {
       Point head = gameSegment(0);   // the head is where the food was
       themeStartSparkle(head.x, head.y);
+      sendEvent("eat");              // phones play a sound and buzz
       sendStatus();                  // phones update their score
+      Serial.printf("Score: %d, step now %lu ms\r\n", gameScore(), currentTickMs());
     }
   }
 
@@ -146,6 +146,17 @@ void updatePaused(unsigned long now, bool pausePressed) {
     return;
   }
   drawIfDue(now);                    // keeps the head pulsing while paused
+}
+
+
+// The snake speeds up a little with every food eaten, down to a limit.
+unsigned long currentTickMs() {
+  unsigned long speedup = (unsigned long)gameScore() * SPEEDUP_PER_FOOD_MS;
+  unsigned long maxSpeedup = START_TICK_MS - MIN_TICK_MS;
+  if (speedup > maxSpeedup) {
+    speedup = maxSpeedup;
+  }
+  return START_TICK_MS - speedup;
 }
 
 
@@ -209,6 +220,7 @@ void enterState(AppState next) {
       break;
     case STATE_GAME_OVER:
       Serial.printf("Game over: %s. Score: %d\r\n", gameOverReason(), gameScore());
+      sendEvent("crash");
       break;
     case STATE_SCORE:
       inputClear();                  // ignore panicked presses during the crash animation
@@ -223,6 +235,7 @@ void startGame(Direction firstMove) {
   gameReset();
   gameTurn(firstMove);
   enterState(STATE_PLAYING);
+  sendEvent("start");
 }
 
 
@@ -322,6 +335,16 @@ const char* stateName() {
 
 const char* modeName() {
   return gameWallMode() == MODE_WRAP ? "wrap" : "walls";
+}
+
+
+// Events are one-off moments, unlike status, which describes how things
+// are right now. The phone turns them into sounds and vibration:
+//   event start   event eat   event crash
+void sendEvent(const char* name) {
+  char message[32];
+  snprintf(message, sizeof(message), "event %s", name);
+  webSend(message);
 }
 
 

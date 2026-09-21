@@ -238,3 +238,29 @@
 - [x] Head pulse, tail fade, food glow and sparkle look right
 - [x] Colours remembered after unplugging
 - [x] Committed and tagged v2.0
+
+
+## Phase 9: Sound, vibration and speed-up (v2.1)
+
+**Date:** 2026-09-20
+
+**What I did**
+- **Speed-up:** each food takes `SPEEDUP_PER_FOOD_MS` (5 ms) off the time between steps, from `START_TICK_MS` (250 ms) down to `MIN_TICK_MS` (120 ms), reached after 26 foods.
+- **Game events:** the ESP32 now sends one-off `event start`, `event eat` and `event crash` messages, separate from score/state status, so a phone joining mid-game never plays a stale sound.
+- **Sound:** synthesised in the browser with the Web Audio API (no audio files). Audio is unlocked on the first tap or key press, as browsers require.
+- **Vibration:** `navigator.vibrate()` on Android; on iPhone, a hidden `<input type="checkbox" switch>` toggled from code.
+- **Settings:** "On this device" section with Sound and Vibration switches, saved in the browser's localStorage (per device, not on the ESP32).
+
+**Results**
+- Speed-up and sounds work well.
+- iPhone vibration does not work (iOS 26.3), even after moving the hidden switch on-screen and clicking both the switch and its label. Parked for later.
+
+**Open issue: iPhone haptics**
+- The switch trick is unofficial and only reported to work on iOS 17.4–26.4 (blocked in 26.5).
+- To investigate: whether the Settings panel's own switches tap when toggled by finger (confirms phone settings), and whether iOS requires the toggle to happen during a real user tap.
+
+**Checklist**
+- [x] Sounds for start, eat and crash
+- [x] Speed-up works and stops at 120 ms
+- [ ] iPhone vibration (open issue)
+- [x] Committed and tagged v2.1

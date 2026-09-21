@@ -2,7 +2,7 @@
 
 Classic Snake on a 32×8 WS2812B LED matrix, driven by an ESP32 and played from your phone's browser over the ESP32's own WiFi hotspot. No router, no app: join the network, open the page, play.
 
-> **Status:** v2.0 complete. Snake and food colours (presets or any custom colour), plus effects: pulsing head, fading tail, glowing food and an eat sparkle. Next up: extras.
+> **Status:** v2.1 complete. Phone sounds for start, eat and crash, and the snake speeds up as it grows. Next up: documentation and a portfolio write-up.
 
 <!-- Add a GIF here once v1.0 works: ![Demo](docs/media/demo.gif) -->
 
@@ -13,6 +13,7 @@ Classic Snake on a 32×8 WS2812B LED matrix, driven by an ESP32 and played from 
 | v1.0 | Attract screen, core Snake (move, eat, grow, die), game over + score, phone controller over the ESP32's hotspot | Done |
 | v1.1 | Wall mode and wrap-around mode, remembered after power-off | Done |
 | v2.0 | Snake and food colours (presets + custom picker), pulsing head, fading tail, glowing food, eat sparkle | Done |
+| v2.1 | Phone sounds for start, eat and crash; snake speeds up with every food (250 ms → 120 ms per step); per-device sound and vibration switches | Done |
 
 ## How it works
 
@@ -29,7 +30,8 @@ Classic Snake on a 32×8 WS2812B LED matrix, driven by an ESP32 and played from 
 4. Press any direction to start. Steer with the d-pad, swipes, or arrow keys / W A S D.
 5. **P** or Space pauses; **R** restarts. Locking your phone mid-game pauses automatically.
 5. **P** or Space pauses; **R** restarts. Locking your phone mid-game pauses automatically.
-6. 6. Between games, tap **Settings** to choose walls or wrap-around edges, and the snake and food colours. Changes preview on the attract screen straight away and are remembered after power-off.
+6. Between games, tap **Settings** to choose walls or wrap-around edges, and the snake and food colours. Changes preview on the attract screen straight away and are remembered after power-off.
+7. Sound needs your phone's silent switch off. Sound and vibration can be turned off per device in Settings, under "On this device".
 
 ## Hardware
 
@@ -91,7 +93,7 @@ docs/                    build log, gotchas, media
 - [x] Phase 6: Attract screen and game over (v1.0)
 - [x] Phase 7: Wall and wrap modes (v1.1)
 - [x] Phase 8: Themes and effects (v2.0)
-- [ ] Phase 9: Extras
+- [x] Phase 9: Extras
 - [ ] Phase 10: Document and publish
 
 ## Build log and gotchas

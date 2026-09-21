@@ -40,3 +40,9 @@ Carried over from the first Snake build, plus anything new found during this one
 - **Re-run the embed script after editing the page.** `python3 tools/embed_page.py` from the repo root, then re-upload. Editing `controller_page.h` by hand gets overwritten.
 - **Don't name a file `network.h`.** The ESP32 core has its own `Network.h`, and macOS treats the two names as the same file.
 - **Save before running.** VS Code's unsaved dot on a tab means the file on disk is still empty or old.
+
+## Phone sound and vibration
+- **Browsers block sound until the user taps.** The page creates or wakes its audio engine on the first touch or key press.
+- **iPhone sound follows the silent switch.** On silent, Web Audio plays nothing.
+- **iPhone Safari has no vibration API.** `navigator.vibrate()` only works on Android. The hidden-switch workaround is unofficial, version-dependent (reported working on iOS 17.4–26.4, blocked in 26.5), and didn't work on this project's iPhone.
+- **Send events separately from status.** Status describes "now" and is resent to new phones; events are moments, so a late joiner doesn't replay them.

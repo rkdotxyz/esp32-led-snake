@@ -132,6 +132,11 @@ const char CONTROLLER_PAGE[] = R"rawliteral(<!DOCTYPE html>
     opacity: 0;                    /* invisible, but still tappable */
     border: 0; padding: 0;
   }
+  .toggle {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 16px; padding: 6px 0;
+  }
+  .toggle input { width: 22px; height: 22px; accent-color: var(--green); }
   .note { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
   .done { width: 100%; padding: 14px; font-size: 17px; border-radius: 14px; }
   .hint { text-align: center; color: var(--muted); font-size: 13px; margin: 12px 0 0; }
@@ -192,6 +197,15 @@ const char CONTROLLER_PAGE[] = R"rawliteral(<!DOCTYPE html>
       <div class="swatches" id="food-swatches"></div>
     </div>
 
+    <div class="setting">
+      <div class="setting-label">
+        <b>On this device</b>
+        <span>Saved on this phone or laptop only. Sound follows your phone's silent switch.</span>
+      </div>
+      <label class="toggle">Sound <input type="checkbox" switch id="pref-sound"></label>
+      <label class="toggle">Vibration <input type="checkbox" switch id="pref-haptics"></label>
+    </div>
+
     <p class="note">The matrix shows every colour at full strength, so dark picks come out brighter, and LEDs look a little different from your screen.</p>
 
     <button id="close-settings" class="done">Done</button>
@@ -223,6 +237,111 @@ const char CONTROLLER_PAGE[] = R"rawliteral(<!DOCTYPE html>
       ['#ff2d95', 'Pink'], ['#ffffff', 'White'],
     ],
   };
+
+  // ---------- Per-device preferences ----------
+  // Sound and vibration are personal, so they're saved in this browser
+  // (localStorage), not on the ESP32. try/catch because storage can be
+  // unavailable, for example in private browsing.
+  function loadPref(name, fallback) {
+    try {
+      const value = localStorage.getItem(`snake-${name}`);
+      return value === null ? fallback : value === '1';
+    } catch (e) {
+      return fallback;
+    }
+  }
+  function savePref(name, on) {
+    try { localStorage.setItem(`snake-${name}`, on ? '1' : '0'); } catch (e) {}
+  }
+  const prefs = {
+    sound: loadPref('sound', true),
+    haptics: loadPref('haptics', true),
+  };
+
+  // ---------- Sound ----------
+  // Sounds are made on the spot with the Web Audio API: no sound files.
+  // Browsers only allow audio after the user has touched the page, so
+  // the audio engine is created (or woken) on the first touch or key.
+  let audio = null;
+
+  function unlockAudio() {
+    if (!audio) {
+      const AudioEngine = window.AudioContext || window.webkitAudioContext;
+      if (!AudioEngine) return;
+      audio = new AudioEngine();
+    }
+    if (audio.state === 'suspended') audio.resume();
+  }
+  // `true` = run before any other handler, so audio is ready in time.
+  document.addEventListener('pointerdown', unlockAudio, true);
+  document.addEventListener('keydown', unlockAudio, true);
+
+  // One note: a wave that slides from one pitch to another while fading
+  // out. type is the wave's shape: 'square' sounds retro, 'sawtooth'
+  // buzzy, 'triangle' soft. Pitch is in Hz (440 = the A above middle C).
+  function tone(type, fromHz, toHz, seconds, delay = 0, volume = 0.15) {
+    if (!audio || !prefs.sound) return;
+    const start = audio.currentTime + delay;
+    const oscillator = audio.createOscillator();
+    const gain = audio.createGain();
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(fromHz, start);
+    oscillator.frequency.exponentialRampToValueAtTime(toHz, start + seconds);
+    gain.gain.setValueAtTime(volume, start);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + seconds);  // fade out
+    oscillator.connect(gain).connect(audio.destination);
+    oscillator.start(start);
+    oscillator.stop(start + seconds);
+  }
+
+  const sounds = {
+    start: () => {                                  // two rising notes
+      tone('triangle', 523, 523, 0.08);
+      tone('triangle', 784, 784, 0.12, 0.09);
+    },
+    eat: () => tone('square', 660, 1320, 0.09, 0, 0.1),     // quick upward blip
+    crash: () => tone('sawtooth', 320, 60, 0.5, 0, 0.18),   // falling buzz
+  };
+
+  // ---------- Vibration ----------
+  // Android: navigator.vibrate() works directly.
+  // iPhone: Safari doesn't support it. The workaround: a hidden switch
+  // control (<input type="checkbox" switch>) makes the iPhone tap when it's
+  // toggled, so we toggle it from code. Apple blocked this in iOS 26.5; on
+  // newer iOS it silently does nothing.
+    const hapticLabel = document.createElement('label');
+  const hapticSwitch = document.createElement('input');
+  hapticSwitch.type = 'checkbox';
+  hapticSwitch.setAttribute('switch', '');
+  hapticLabel.appendChild(hapticSwitch);
+  hapticLabel.setAttribute('aria-hidden', 'true');
+  // Invisible, but still on-screen and laid out: iOS ignores taps on
+  // elements parked off-screen or hidden with display:none.
+  hapticLabel.style.cssText =
+    'position:fixed;bottom:0;left:0;width:1px;height:1px;opacity:0.01;pointer-events:none;z-index:-1';
+  document.body.appendChild(hapticLabel);
+
+  // pulses: 1 = a single tap, 3 = three quick taps (for a crash)
+  function haptic(pulses = 1) {
+    if (!prefs.haptics) return;
+    if (navigator.vibrate) {
+      navigator.vibrate(pulses === 1 ? 12 : [30, 60, 30, 60, 30]);
+      return;
+    }
+    for (let i = 0; i < pulses; i++) {
+      setTimeout(() => {
+        hapticSwitch.click();   // toggling the switch is what makes iOS tap
+        hapticLabel.click();    // some iOS versions only respond to the label
+      }, i * 90);
+    }
+  }
+
+  // Game moments from the ESP32 become sound and vibration.
+  function handleEvent(name) {
+    if (name === 'start') { sounds.start(); }
+    if (name === 'eat')   { sounds.eat(); haptic(1); }
+    if (name === 'crash') { sounds.crash(); haptic(3); }
+  }
 
   // ---------- Game state, as told to us by the ESP32 ----------
   let state = 'ready';
@@ -260,12 +379,12 @@ const char CONTROLLER_PAGE[] = R"rawliteral(<!DOCTYPE html>
     connText.textContent = on ? 'Connected' : 'Reconnecting…';
   }
 
-  // Sends one command word. Short vibration where supported (Android).
+  // Sends one command word, with a light tap of vibration.
   function send(command) {
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(command);
     }
-    if (navigator.vibrate) navigator.vibrate(8);
+    haptic(1);                     // a light tap under your finger
   }
 
   // Messages look like "score 7" or "state paused": a key, a space, a value.
@@ -278,6 +397,7 @@ const char CONTROLLER_PAGE[] = R"rawliteral(<!DOCTYPE html>
     if (key === 'reason') reason = value;
     if (key === 'mode') showMode(value);
     if (key === 'snake' || key === 'food') showColour(key, value);
+    if (key === 'event') handleEvent(value);
     if (key === 'state') {
       state = value;
       showState();
@@ -459,6 +579,16 @@ const char CONTROLLER_PAGE[] = R"rawliteral(<!DOCTYPE html>
     send(command);
     const button = document.querySelector(`[data-dir="${command}"]`);
     if (button) flash(button);
+  });
+
+  // ---------- Sound and vibration switches ----------
+  [['pref-sound', 'sound'], ['pref-haptics', 'haptics']].forEach(([id, name]) => {
+    const toggle = document.getElementById(id);
+    toggle.checked = prefs[name];
+    toggle.addEventListener('change', () => {
+      prefs[name] = toggle.checked;
+      savePref(name, toggle.checked);
+    });
   });
 
   // ---------- Start ----------
